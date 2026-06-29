@@ -13,6 +13,9 @@ export default function SceneSwitcher() {
   const scene = scenes[current];
 
   const lockedRef = useRef(false);
+  // Set while an expanded project (or other overlay) wants to own scrolling and
+  // keyboard nav, so we don't switch scenes out from under it.
+  const navLockedRef = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const lock = useCallback(() => {
@@ -46,6 +49,14 @@ export default function SceneSwitcher() {
   }, [goToScene]);
 
   useEffect(() => {
+    const onLock = (e: Event) => {
+      navLockedRef.current = (e as CustomEvent<boolean>).detail;
+    };
+    window.addEventListener("scene:lock", onLock as EventListener);
+    return () => window.removeEventListener("scene:lock", onLock as EventListener);
+  }, []);
+
+  useEffect(() => {
     const step = (delta: number) => {
       if (lockedRef.current) return;
       setCurrent((prev) => {
@@ -57,12 +68,15 @@ export default function SceneSwitcher() {
     };
 
     const onWheel = (e: WheelEvent) => {
+      // Let an open project scroll its own content instead of switching scenes.
+      if (navLockedRef.current) return;
       if (Math.abs(e.deltaY) <= WHEEL_THRESHOLD) return;
       e.preventDefault();
       step(e.deltaY > 0 ? 1 : -1);
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (navLockedRef.current) return;
       if (e.key === "ArrowDown" || e.key === "PageDown") {
         e.preventDefault();
         step(1);
@@ -77,6 +91,7 @@ export default function SceneSwitcher() {
       touchStartY = e.touches[0].clientY;
     };
     const onTouchEnd = (e: TouchEvent) => {
+      if (navLockedRef.current) return;
       const delta = touchStartY - e.changedTouches[0].clientY;
       if (Math.abs(delta) < SWIPE_THRESHOLD) return;
       step(delta > 0 ? 1 : -1);

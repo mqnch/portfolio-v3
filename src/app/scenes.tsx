@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { ImageTuning } from "@/components/ImageEngine";
+import ProjectsPanel from "@/components/ProjectsPanel";
 
 export type Scene = {
   id: string;
@@ -21,7 +22,7 @@ export type Scene = {
 // Hong Kong harbour from the Peak. Horizon sits just below mid-frame; the sky is
 // kept calm so the clouds don't shine or shimmer.
 export const aboutImage: ImageTuning = {
-  src: "/images/IMG_7933.jpeg",
+  src: "/images/IMG_7933.webp",
   horizon: 0.48,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.78,
@@ -33,7 +34,7 @@ export const aboutImage: ImageTuning = {
 // Work photo: the skyline rises much higher in frame, so push the horizon up and
 // keep the (smaller) band of sky above it calm.
 export const workImage: ImageTuning = {
-  src: "/images/IMG_7972%202.jpeg",
+  src: "/images/IMG_7972_2.webp",
   horizon: 0.55,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.85,
@@ -52,7 +53,7 @@ export const workImage: ImageTuning = {
 // Built photo: railway crossing at sunset, skyline sitting around mid-frame.
 // Keep the sky calm so the sunset gradient stays smooth.
 export const builtImage: ImageTuning = {
-  src: "/images/IMG_9347.jpeg",
+  src: "/images/IMG_9347.webp",
   horizon: 0.55,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.8,
@@ -67,7 +68,7 @@ export const builtImage: ImageTuning = {
 // Other photo: rice paddy with a transmission tower under a big blue sky. The
 // mountains/horizon sit just below mid-frame, with lots of calm sky above.
 export const otherImage: ImageTuning = {
-  src: "/images/IMG_7630.jpeg",
+  src: "/images/IMG_7630.webp",
   horizon: 0.58,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.8,
@@ -82,7 +83,7 @@ export const otherImage: ImageTuning = {
 // twinkle). Lower gamma lifts the dim fish/detail out of the dark water, and a
 // little darkFill keeps the darkest corners reading as ink rather than paper.
 export const blogImage: ImageTuning = {
-  src: "/images/IMG_7480.jpeg",
+  src: "/images/IMG_7480.webp",
   horizon: 1,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.9,
@@ -102,36 +103,94 @@ const experience = [
   { title: "VEX Robotics — team lead", href: null, period: "2021—2025", logo: "/images/vex.png", logoScale: null },
 ];
 
-const projects = [
+export type Project = {
+  name: string;
+  /** Short blurb shown in the collapsed list. */
+  description: string;
+  /** External link, surfaced as a "visit" action in the expanded view. */
+  href: string;
+  /** Longer write-up shown when the project is expanded. */
+  details?: string;
+  /** Small tech/stack tags. */
+  tech?: string[];
+  year?: string;
+  /** Screenshots shown stacked in the expanded view. Drop files in /public/images/projects. */
+  images?: { src: string; alt: string }[];
+};
+
+export const projects: Project[] = [
   {
     name: "musicoverlay",
     description: "keyboard-driven macos hud for controlling music without switching apps.",
     href: "https://github.com/mqnch/musicoverlay",
+    year: "2025",
+    tech: ["swift", "swiftui", "appkit"],
+    details:
+      "a translucent heads-up display that floats over any app. trigger it with a global hotkey to scrub, skip, and search your library without ever leaving what you're doing. built natively for macos with a focus on speed and staying out of the way.",
+    images: [
+      { src: "/images/projects/musicoverlay-1.png", alt: "musicoverlay hud over a desktop" },
+      { src: "/images/projects/musicoverlay-2.png", alt: "musicoverlay search view" },
+    ],
   },
   {
     name: "getajobchud.com",
     description: "scrapes internships and helps you track your applications.",
     href: "https://www.getajobchud.com",
+    year: "2025",
+    tech: ["next.js", "postgres", "playwright"],
+    details:
+      "aggregates fresh internship postings from across the web and gives you a single board to track every application's status. nightly scrapers keep listings current so you spend less time hunting and more time applying.",
+    images: [
+      { src: "/images/projects/getajobchud-1.png", alt: "getajobchud listings board" },
+    ],
   },
   {
     name: "cumo",
     description: "always-on command bar that turns natural language into scheduled events.",
     href: "https://trycumo.com",
+    year: "2024",
+    tech: ["next.js", "openai", "google calendar"],
+    details:
+      "type something like \"lunch with sam friday at noon\" and cumo parses it into a real calendar event. an always-available command bar that turns plain english into structured scheduling.",
+    images: [
+      { src: "/images/projects/cumo-1.png", alt: "cumo command bar" },
+    ],
   },
   {
     name: "loan prediction model",
     description: "cox survival model predicting loan default risk with fairness analysis.",
     href: "https://github.com/mqnch/loan-prediction-model",
+    year: "2024",
+    tech: ["python", "lifelines", "pandas"],
+    details:
+      "a cox proportional-hazards survival model that predicts the timing of loan default rather than just a yes/no, paired with a fairness analysis across demographic groups to surface and quantify bias in the predictions.",
+    images: [
+      { src: "/images/projects/loan-1.png", alt: "survival curves" },
+    ],
   },
   {
     name: "self-learning chess ai",
     description: "alphazero-style engine with monte carlo tree search and self-play.",
     href: "https://github.com/mqnch/chess-ai",
+    year: "2023",
+    tech: ["python", "pytorch", "mcts"],
+    details:
+      "an alphazero-inspired engine that learns chess entirely from self-play, with no human games. a neural network guides monte carlo tree search, and the two improve together over thousands of games against itself.",
+    images: [
+      { src: "/images/projects/chess-1.png", alt: "chess ai self-play" },
+    ],
   },
   {
     name: "hearth.",
     description: "real estate analyzer generating renovation visualizations and cost estimates.",
     href: "https://github.com/mqnch/hearth.",
+    year: "2024",
+    tech: ["next.js", "diffusion", "openai"],
+    details:
+      "point hearth at a listing and it generates renovation visualizations alongside cost estimates, helping you see a property's potential and what it would take to get there.",
+    images: [
+      { src: "/images/projects/hearth-1.png", alt: "hearth renovation visualization" },
+    ],
   },
 ];
 
@@ -256,21 +315,7 @@ export const scenes: Scene[] = [
     image: builtImage,
     caption: "university of waterloo",
     captionColor: "text-white",
-    content: (
-      <div className="space-y-3 text-lg">
-        <p className="text-muted leading-relaxed">some things i&apos;ve made:</p>
-        <ul className="space-y-3">
-          {projects.map((project) => (
-            <li key={project.name} className="space-y-0.5">
-              <a href={project.href} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
-                {project.name}
-              </a>
-              <p className="text-muted text-sm leading-relaxed">{project.description}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
-    ),
+    content: <ProjectsPanel />,
   },
   {
     id: "blog",
@@ -280,7 +325,7 @@ export const scenes: Scene[] = [
     captionColor: "text-foreground",
     content: (
       <p className="text-muted leading-relaxed text-lg">
-        nothing here yet — writing soon.
+        life is sunshine and rainbows
       </p>
     ),
   },

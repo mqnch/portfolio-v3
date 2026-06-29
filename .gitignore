@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# full-res photo originals (served as resized .webp from public/images)
+/image-originals
+
 # debug
 npm-debug.log*
 yarn-debug.log*
