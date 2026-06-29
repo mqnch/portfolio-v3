@@ -353,7 +353,7 @@ export const scenes: Scene[] = [
         <br />
         this winter i&apos;m planning to travel to{" "}
         <span className="text-foreground">south korea</span> and revisit{" "}
-        <span className="text-foreground">china</span>. maybe the nordic countries too.
+        <span className="text-foreground">china</span>.
       </p>
     ),
   },
