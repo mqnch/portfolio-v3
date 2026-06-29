@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { scenes, links } from "@/app/scenes";
+import { scenes, links, defaultImage } from "@/app/scenes";
 import ImageEngine from "@/components/ImageEngine";
 
 const COOLDOWN = 200;
@@ -34,6 +34,16 @@ export default function SceneSwitcher() {
     },
     [lock]
   );
+
+  useEffect(() => {
+    const onNavigate = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      const index = scenes.findIndex((s) => s.id === id);
+      if (index !== -1) goToScene(index);
+    };
+    window.addEventListener("scene:navigate", onNavigate as EventListener);
+    return () => window.removeEventListener("scene:navigate", onNavigate as EventListener);
+  }, [goToScene]);
 
   useEffect(() => {
     const step = (delta: number) => {
@@ -90,8 +100,18 @@ export default function SceneSwitcher() {
     <main className="relative h-screen w-full overflow-hidden">
       <div className="pointer-events-none absolute inset-0 md:pointer-events-auto md:left-1/3">
         <div className="h-full w-full opacity-15 md:opacity-100">
-          <ImageEngine src="/images/IMG_7933.jpeg" />
+          <ImageEngine image={scene.image ?? defaultImage} />
         </div>
+        {scene.caption && (
+          <span
+            key={scene.id}
+            className={`fade absolute bottom-6 right-8 hidden text-sm md:block ${
+              scene.captionDark ? "text-foreground" : "text-faint"
+            }`}
+          >
+            {scene.caption}
+          </span>
+        )}
       </div>
 
       <div className="relative z-10 flex h-full flex-col px-6 py-10 md:w-1/3 md:px-16 md:py-14">
