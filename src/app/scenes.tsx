@@ -9,8 +9,8 @@ export type Scene = {
   image?: ImageTuning;
   /** Short location label shown over the background image. */
   caption?: string;
-  /** Render the caption in dark text (for lighter images). */
-  captionDark?: boolean;
+  /** Tailwind text-color class for the caption, tuned per image. Defaults to text-faint. */
+  captionColor?: string;
   content: ReactNode;
 };
 
@@ -198,7 +198,7 @@ export const scenes: Scene[] = [
         .
         <br />
         <br />
-        after i retire at 29, you can find me on my tea farm in{" "}
+        once i retire at 29, you can find me on my tea farm in{" "}
         <a
           href="https://en.wikipedia.org/wiki/Yixing"
           target="_blank"
@@ -241,7 +241,7 @@ export const scenes: Scene[] = [
     label: "built",
     image: builtImage,
     caption: "university of waterloo",
-    captionDark: true,
+    captionColor: "text-white",
     content: (
       <div className="space-y-3 text-lg">
         <p className="text-muted leading-relaxed">some things i&apos;ve made:</p>
@@ -263,7 +263,7 @@ export const scenes: Scene[] = [
     label: "blog",
     image: blogImage,
     caption: "osaka aquarium",
-    captionDark: true,
+    captionColor: "text-foreground",
     content: (
       <p className="text-muted leading-relaxed text-lg">
         nothing here yet — writing soon.
@@ -274,8 +274,8 @@ export const scenes: Scene[] = [
     id: "other",
     label: "other",
     image: otherImage,
-    caption: "nara train to kyoto",
-    captionDark: true,
+    caption: "train from nara to kyoto",
+    captionColor: "text-white",
     content: (
       <p className="text-muted leading-relaxed text-lg">
         a place for everything else. coming soon.

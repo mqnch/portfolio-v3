@@ -106,8 +106,13 @@ export default function SceneSwitcher() {
           <span
             key={scene.id}
             className={`fade absolute bottom-6 right-8 hidden text-sm md:block ${
-              scene.captionDark ? "text-foreground" : "text-faint"
+              scene.captionColor ?? "text-faint"
             }`}
+            style={{
+              textShadow: scene.captionColor === "text-white"
+                ? "0 1px 3px rgba(0,0,0,0.55)"
+                : "0 1px 3px rgba(250,250,248,0.65)",
+            }}
           >
             {scene.caption}
           </span>

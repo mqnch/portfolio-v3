@@ -3,6 +3,7 @@ import React from "react";
 import { Fraunces, Geist } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
+import IntroVeil from "@/components/IntroVeil";
 
 const fraunces = Fraunces({
   variable: "--font-serif",
@@ -28,6 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${fraunces.variable} ${geist.variable} antialiased`}>
+        <IntroVeil />
         {children}
         <Analytics />
       </body>
