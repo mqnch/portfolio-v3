@@ -19,6 +19,7 @@
 html,
 body {
   height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -27,4 +28,23 @@ body {
   font-family: var(--font-serif), Georgia, "Times New Roman", serif;
   font-synthesis-weight: none;
   text-rendering: optimizeLegibility;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade {
+  animation: fade 0.6s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade {
+    animation: none;
+  }
 }
