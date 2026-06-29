@@ -96,9 +96,10 @@ export const blogImage: ImageTuning = {
 export const defaultImage: ImageTuning = aboutImage;
 
 const experience = [
-  { title: "MEMOTEXT — software engineer", href: "https://mtxt.ai", period: "2026" },
-  { title: "WATonomous — software engineer", href: "https://www.watonomous.ca", period: "2025" },
-  { title: "VEX Robotics — team lead", href: null, period: "2021—2025" },
+  { title: "TribalScale — software engineer", href: "https://www.tribalscale.com", period: "present", logo: "/images/tribalscale.jpg", logoScale: null },
+  { title: "MEMOTEXT — software engineer", href: "https://mtxt.ai", period: "present", logo: "/images/mtxt.png", logoScale: "scale-[1.55]" },
+  { title: "WATonomous — software engineer", href: "https://www.watonomous.ca", period: "2025", logo: "/images/wato.png", logoScale: null },
+  { title: "VEX Robotics — team lead", href: null, period: "2021—2025", logo: "/images/vex.png", logoScale: null },
 ];
 
 const projects = [
@@ -148,6 +149,16 @@ export const scenes: Scene[] = [
         </span>{" "}
         &amp; building agents at{" "}
         <a
+          href="https://www.tribalscale.com"
+          target="_blank"
+          rel="noreferrer"
+          className="whitespace-nowrap text-foreground border-b border-transparent hover:border-current"
+        >
+          <img src="/images/tribalscale.jpg" alt="" className="mr-1 inline-block h-[1em] w-[1em] rounded-sm align-[-0.15em] opacity-85" />
+          TribalScale
+        </a>{" "}
+        &amp;{" "}
+        <a
           href="https://mtxt.ai"
           target="_blank"
           rel="noreferrer"
@@ -157,16 +168,6 @@ export const scenes: Scene[] = [
             <img src="/images/mtxt.png" alt="" className="h-full w-full scale-[1.6] opacity-85" />
           </span>
           MEMOTEXT
-        </a>{" "}
-        &amp;{" "}
-        <a
-          href="https://www.tribalscale.com"
-          target="_blank"
-          rel="noreferrer"
-          className="whitespace-nowrap text-foreground border-b border-transparent hover:border-current"
-        >
-          <img src="/images/tribalscale.jpg" alt="" className="mr-1 inline-block h-[1em] w-[1em] rounded-sm align-[-0.15em] opacity-85" />
-          TribalScale
         </a>
         .
         <br />
@@ -220,18 +221,31 @@ export const scenes: Scene[] = [
       <div className="space-y-3 text-lg">
         <p className="text-muted leading-relaxed">a rough timeline of what i&apos;ve worked on:</p>
         <ul className="space-y-1.5">
-          {experience.map((item) => (
-            <li key={item.title} className="flex items-baseline justify-between gap-3">
-              {item.href ? (
-                <a href={item.href} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
-                  {item.title}
-                </a>
-              ) : (
-                <span>{item.title}</span>
-              )}
-              <span className="text-faint text-sm">{item.period}</span>
-            </li>
-          ))}
+          {experience.map((item) => {
+            const logo = item.logoScale ? (
+              <span className="mr-1.5 inline-block h-[1.05em] w-[1.05em] overflow-hidden rounded-sm align-[-0.15em]">
+                <img src={item.logo} alt="" className={`h-full w-full object-cover opacity-90 ${item.logoScale}`} />
+              </span>
+            ) : (
+              <img src={item.logo} alt="" className="mr-1.5 inline-block h-[1.05em] w-[1.05em] rounded-sm object-cover align-[-0.15em] opacity-90" />
+            );
+            return (
+              <li key={item.title} className="flex items-baseline justify-between gap-3">
+                {item.href ? (
+                  <a href={item.href} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
+                    {logo}
+                    {item.title}
+                  </a>
+                ) : (
+                  <span>
+                    {logo}
+                    {item.title}
+                  </span>
+                )}
+                <span className="text-faint text-sm">{item.period}</span>
+              </li>
+            );
+          })}
         </ul>
       </div>
     ),
