@@ -75,16 +75,7 @@ export default function ProjectsPanel() {
               {project.year && <span className="text-faint text-sm">{project.year}</span>}
             </div>
             {project.tech && project.tech.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {project.tech.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full border border-faint/40 px-2 py-0.5 text-xs text-muted"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
+              <p className="text-faint text-sm">{project.tech.join(" · ")}</p>
             )}
           </div>
 
@@ -116,14 +107,30 @@ export default function ProjectsPanel() {
             </div>
           )}
 
-          <a
-            href={project.href}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-block text-sm text-foreground underline-offset-4 hover:underline"
-          >
-            visit →
-          </a>
+          {(project.website || project.repo) && (
+            <div className="flex items-center gap-4 text-sm">
+              {project.website && (
+                <a
+                  href={project.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-foreground underline-offset-4 hover:underline"
+                >
+                  visit →
+                </a>
+              )}
+              {project.repo && (
+                <a
+                  href={project.repo}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-foreground underline-offset-4 hover:underline"
+                >
+                  repo →
+                </a>
+              )}
+            </div>
+          )}
         </ScrollArea>
       ) : (
         <div className="space-y-3 text-lg">

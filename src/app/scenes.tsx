@@ -107,8 +107,10 @@ export type Project = {
   name: string;
   /** Short blurb shown in the collapsed list. */
   description: string;
-  /** External link, surfaced as a "visit" action in the expanded view. */
-  href: string;
+  /** Live site, surfaced as a "visit ->" action. Omit for projects with no site. */
+  website?: string;
+  /** Source repository, surfaced as a "repo ->" action. */
+  repo?: string;
   /** Longer write-up shown when the project is expanded. */
   details?: string;
   /** Small tech/stack tags. */
@@ -122,46 +124,50 @@ export const projects: Project[] = [
   {
     name: "musicoverlay",
     description: "keyboard-driven macos hud for controlling music without switching apps.",
-    href: "https://github.com/mqnch/musicoverlay",
+    repo: "https://github.com/mqnch/musicoverlay",
     year: "2025",
-    tech: ["swift", "swiftui", "appkit"],
+    tech: ["swift", "spotify api", "applescript"],
     details:
       "a translucent heads-up display that floats over any app. trigger it with a global hotkey to scrub, skip, and search your library without ever leaving what you're doing. built natively for macos with a focus on speed and staying out of the way.",
     images: [
-      { src: "/images/projects/musicoverlay-1.png", alt: "musicoverlay hud over a desktop" },
-      { src: "/images/projects/musicoverlay-2.png", alt: "musicoverlay search view" },
+      { src: "/images/projects/musicoverlay-1.webp", alt: "musicoverlay hud" },
+      { src: "/images/projects/musicoverlay-2.webp", alt: "musicoverlay minihud" },
     ],
   },
   {
     name: "getajobchud.com",
     description: "scrapes internships and helps you track your applications.",
-    href: "https://www.getajobchud.com",
+    website: "https://www.getajobchud.com",
+    repo: "https://github.com/mqnch/jobmaxxing",
     year: "2025",
-    tech: ["next.js", "postgres", "playwright"],
+    tech: ["next.js", "typescript", "tailwind", "supabase"],
     details:
       "aggregates fresh internship postings from across the web and gives you a single board to track every application's status. nightly scrapers keep listings current so you spend less time hunting and more time applying.",
     images: [
-      { src: "/images/projects/getajobchud-1.png", alt: "getajobchud listings board" },
+      { src: "/images/projects/getajobchud-1.webp", alt: "getajobchud hero" },
+      { src: "/images/projects/getajobchud-2.webp", alt: "getajobchud listings" },
+      { src: "/images/projects/getajobchud-3.webp", alt: "getajobchud applications" },
     ],
   },
   {
     name: "cumo",
     description: "always-on command bar that turns natural language into scheduled events.",
-    href: "https://trycumo.com",
+    website: "https://trycumo.com",
+    repo: "https://github.com/mqnch/Cumo",
     year: "2024",
-    tech: ["next.js", "openai", "google calendar"],
+    tech: ["electron", "typescript", "tailwind", "flask", "huey", "google oauth"],
     details:
       "type something like \"lunch with sam friday at noon\" and cumo parses it into a real calendar event. an always-available command bar that turns plain english into structured scheduling.",
     images: [
-      { src: "/images/projects/cumo-1.png", alt: "cumo command bar" },
+      { src: "/images/projects/cumo-1.webp", alt: "cumo command bar" },
     ],
   },
   {
     name: "loan prediction model",
     description: "cox survival model predicting loan default risk with fairness analysis.",
-    href: "https://github.com/mqnch/loan-prediction-model",
+    repo: "https://github.com/mqnch/loan-prediction-model",
     year: "2024",
-    tech: ["python", "lifelines", "pandas"],
+    tech: ["xgboost", "scikit-learn", "pandas", "shap"],
     details:
       "a cox proportional-hazards survival model that predicts the timing of loan default rather than just a yes/no, paired with a fairness analysis across demographic groups to surface and quantify bias in the predictions.",
     images: [
@@ -171,9 +177,9 @@ export const projects: Project[] = [
   {
     name: "self-learning chess ai",
     description: "alphazero-style engine with monte carlo tree search and self-play.",
-    href: "https://github.com/mqnch/chess-ai",
+    repo: "https://github.com/mqnch/chess-ai",
     year: "2023",
-    tech: ["python", "pytorch", "mcts"],
+    tech: ["pytorch", "pandas", "cuda"],
     details:
       "an alphazero-inspired engine that learns chess entirely from self-play, with no human games. a neural network guides monte carlo tree search, and the two improve together over thousands of games against itself.",
     images: [
@@ -183,9 +189,9 @@ export const projects: Project[] = [
   {
     name: "hearth.",
     description: "real estate analyzer generating renovation visualizations and cost estimates.",
-    href: "https://github.com/mqnch/hearth.",
+    repo: "https://github.com/mqnch/hearth.",
     year: "2024",
-    tech: ["next.js", "diffusion", "openai"],
+    tech: ["next.js", "typescript", "tailwind", "fastapi", "gemini api"],
     details:
       "point hearth at a listing and it generates renovation visualizations alongside cost estimates, helping you see a property's potential and what it would take to get there.",
     images: [
@@ -258,7 +264,7 @@ export const scenes: Scene[] = [
         .
         <br />
         <br />
-        once i retire at 29, you can find me on my tea farm in{" "}
+        when i retire at 29, you can find me on my tea farm in{" "}
         <a
           href="https://en.wikipedia.org/wiki/Yixing"
           target="_blank"
