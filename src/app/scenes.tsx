@@ -50,19 +50,17 @@ export const workImage: ImageTuning = {
   darkFillTexture: 0.4,
 };
 
-// Built photo: railway crossing at sunset, skyline sitting around mid-frame.
-// Keep the sky calm so the sunset gradient stays smooth.
+// Built photo: garden pond with bright reflections; deepen greens and cut glare.
 export const builtImage: ImageTuning = {
-  src: "/images/IMG_9347.webp",
+  src: "/images/IMG_9608.webp",
   horizon: 0.55,
   skyTwinkleCalm: 1,
-  skyDriftDamp: 0.8,
-  // The bright sunset blows out by default: lower gamma sinks the midtones,
-  // lower glow stops the sky/lights bleeding to white, and darkFill gives the
-  // dark foreground solid dots so it stops reading as white paper.
-  gamma: 0.24,
-  glow: 0.14,
-  darkFill: 0.6,
+  skyDriftDamp: 0.88,
+  gamma: 0.50,
+  glow: 0.08,
+  darkFill: 0.72,
+  darkFillTexture: 0.4,
+  saturation: 1.38,
 };
 
 // Other photo: rice paddy with a transmission tower under a big blue sky. The
@@ -97,10 +95,9 @@ export const blogImage: ImageTuning = {
 export const defaultImage: ImageTuning = aboutImage;
 
 const experience = [
-  { title: "TribalScale — software engineer", href: "https://www.tribalscale.com", period: "present", logo: "/images/tribalscale.jpg", logoScale: null },
-  { title: "MEMOTEXT — software engineer", href: "https://mtxt.ai", period: "present", logo: "/images/mtxt.png", logoScale: "scale-[1.55]" },
-  { title: "WATonomous — software engineer", href: "https://www.watonomous.ca", period: "2025", logo: "/images/wato.png", logoScale: null },
-  { title: "VEX Robotics — team lead", href: null, period: "2021—2025", logo: "/images/vex.png", logoScale: null },
+  { title: "TribalScale · software engineer", href: "https://www.tribalscale.com", period: "present", logo: "/images/tribalscale.jpg", logoScale: null },
+  { title: "MEMOTEXT · software engineer", href: "https://mtxt.ai", period: "present", logo: "/images/mtxt.png", logoScale: "scale-[1.55]" },
+  { title: "WATonomous · software engineer", href: "https://www.watonomous.ca", period: "2025", logo: "/images/wato.png", logoScale: null },
 ];
 
 export type Project = {
@@ -170,9 +167,6 @@ export const projects: Project[] = [
     tech: ["xgboost", "scikit-learn", "pandas", "shap"],
     details:
       "a cox proportional-hazards survival model that predicts the timing of loan default rather than just a yes/no, paired with a fairness analysis across demographic groups to surface and quantify bias in the predictions.",
-    images: [
-      { src: "/images/projects/loan-1.png", alt: "survival curves" },
-    ],
   },
   {
     name: "self-learning chess ai",
@@ -182,21 +176,6 @@ export const projects: Project[] = [
     tech: ["pytorch", "pandas", "cuda"],
     details:
       "an alphazero-inspired engine that learns chess entirely from self-play, with no human games. a neural network guides monte carlo tree search, and the two improve together over thousands of games against itself.",
-    images: [
-      { src: "/images/projects/chess-1.png", alt: "chess ai self-play" },
-    ],
-  },
-  {
-    name: "hearth.",
-    description: "real estate analyzer generating renovation visualizations and cost estimates.",
-    repo: "https://github.com/mqnch/hearth.",
-    year: "2024",
-    tech: ["next.js", "typescript", "tailwind", "fastapi", "gemini api"],
-    details:
-      "point hearth at a listing and it generates renovation visualizations alongside cost estimates, helping you see a property's potential and what it would take to get there.",
-    images: [
-      { src: "/images/projects/hearth-1.png", alt: "hearth renovation visualization" },
-    ],
   },
 ];
 
@@ -284,7 +263,7 @@ export const scenes: Scene[] = [
     caption: "lugard road trail, hk",
     content: (
       <div className="space-y-3 text-lg">
-        <p className="text-muted leading-relaxed">a rough timeline of what i&apos;ve worked on:</p>
+        <p className="text-muted leading-relaxed">where i've worked:</p>
         <ul className="space-y-1.5">
           {experience.map((item) => {
             const logo = item.logoScale ? (
@@ -319,13 +298,13 @@ export const scenes: Scene[] = [
     id: "building",
     label: "built",
     image: builtImage,
-    caption: "university of waterloo",
+    caption: "brooklyn botanical garden, nyc",
     captionColor: "text-white",
     content: <ProjectsPanel />,
   },
   {
-    id: "blog",
-    label: "blog",
+    id: "writing",
+    label: "writing",
     image: blogImage,
     caption: "osaka aquarium",
     captionColor: "text-foreground",
@@ -376,7 +355,7 @@ export const scenes: Scene[] = [
           rel="noreferrer"
           className="text-foreground underline-offset-4 hover:underline"
         >
-          wantmetoo - reiko
+          wantmetoo · reiko
         </a>
         <br />
         <a
@@ -385,16 +364,16 @@ export const scenes: Scene[] = [
           rel="noreferrer"
           className="text-foreground underline-offset-4 hover:underline"
         >
-          maybes - reiko
+          maybes · reiko
         </a>
         <br />
         <a
-          href="https://open.spotify.com/track/3peZooXvocw3H5qe0R0yH7"
+          href="https://open.spotify.com/track/4xVoUumxOenynyfVwoZGZi?si=d3defcfdddef45da"
           target="_blank"
           rel="noreferrer"
           className="text-foreground underline-offset-4 hover:underline"
         >
-          empty heart — noho, reiko
+          worth your time / nothing at all · kiyu, reiko
         </a>
         <br />
         <br />

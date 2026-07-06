@@ -70,10 +70,7 @@ export default function ProjectsPanel() {
           </button>
 
           <div className="space-y-1.5">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-foreground text-xl">{project.name}</h2>
-              {project.year && <span className="text-faint text-sm">{project.year}</span>}
-            </div>
+            <h2 className="text-foreground text-xl">{project.name}</h2>
             {project.tech && project.tech.length > 0 && (
               <p className="text-faint text-sm">{project.tech.join(" · ")}</p>
             )}
@@ -134,7 +131,7 @@ export default function ProjectsPanel() {
         </ScrollArea>
       ) : (
         <div className="space-y-3 text-lg">
-          <p className="text-muted leading-relaxed">some things i&apos;ve made:</p>
+          <p className="text-muted leading-relaxed">stuff i&apos;ve built:</p>
           <ul className="space-y-3">
             {projects.map((p, i) => (
               <li key={p.name}>

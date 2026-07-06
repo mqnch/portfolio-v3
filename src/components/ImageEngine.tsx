@@ -41,6 +41,10 @@ export type ImageTuning = {
   skyTwinkleCalm?: number;
   /** 0 = sky drifts fully, 1 = sky drift fully damped (still sky). */
   skyDriftDamp?: number;
+  /** Vertical crop anchor for object-cover: 0 = bottom, 0.5 = center, 1 = top/sky. */
+  focusY?: number;
+  /** Color saturation multiplier; 1 = unchanged, >1 = richer color. */
+  saturation?: number;
 };
 
 const DEFAULT_TUNING = {
@@ -56,6 +60,8 @@ const DEFAULT_TUNING = {
   horizonSoftness: 0.06,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.78,
+  focusY: 0.5,
+  saturation: 1,
 } satisfies Omit<Required<ImageTuning>, "src">;
 
 type ResolvedTuning = {
@@ -71,6 +77,8 @@ type ResolvedTuning = {
   horizonSoftness: number;
   skyTwinkleCalm: number;
   skyDriftDamp: number;
+  focusY: number;
+  saturation: number;
 };
 
 function resolveTuning(t: ImageTuning): ResolvedTuning {
@@ -87,6 +95,8 @@ function resolveTuning(t: ImageTuning): ResolvedTuning {
     horizonSoftness: t.horizonSoftness ?? DEFAULT_TUNING.horizonSoftness,
     skyTwinkleCalm: t.skyTwinkleCalm ?? DEFAULT_TUNING.skyTwinkleCalm,
     skyDriftDamp: t.skyDriftDamp ?? DEFAULT_TUNING.skyDriftDamp,
+    focusY: t.focusY ?? DEFAULT_TUNING.focusY,
+    saturation: t.saturation ?? DEFAULT_TUNING.saturation,
   };
 }
 
@@ -131,6 +141,7 @@ uniform float uDarkFillTo;
 uniform float uDarkFillTexFrom;
 uniform float uDarkFillTexTo;
 uniform float uGlow;
+uniform float uSaturation;
 uniform float uMode;
 uniform float uAA;
 uniform float uCellAspect;
@@ -201,6 +212,8 @@ vec3 sampleCell(vec2 cell, float drift, out float b) {
   float delay = hash(cell) * uStagger;
   float localMix = smoothstep(delay, delay + (1.0 - uStagger), uProgress);
   vec3 col = mix(colA, colB, localMix);
+  float gray = dot(col, vec3(0.2126, 0.7152, 0.0722));
+  col = mix(vec3(gray), col, uSaturation);
   float luma = dot(col, vec3(0.2126, 0.7152, 0.0722));
   luma = pow(luma, uGamma);
   // Above the horizon (sky) twinkle is calmed toward only-bright-cells so it
@@ -240,7 +253,10 @@ void main() {
     vec3 colB = texture2D(uTex2, uvB).rgb;
     float delay = hash(baseCell) * uStagger;
     float localMix = smoothstep(delay, delay + (1.0 - uStagger), uProgress);
-    gl_FragColor = vec4(mix(colA, colB, localMix), 1.0);
+    vec3 col = mix(colA, colB, localMix);
+    float gray = dot(col, vec3(0.2126, 0.7152, 0.0722));
+    col = mix(vec3(gray), col, uSaturation);
+    gl_FragColor = vec4(col, 1.0);
     return;
   }
 
@@ -386,12 +402,12 @@ export default function ImageEngine({
         if (!ctx) return;
         const rect = container.getBoundingClientRect();
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const cssW = Math.max(1, Math.floor(rect.width));
-        const cssH = Math.max(1, Math.floor(rect.height));
-        canvas.width = Math.floor(cssW * dpr);
-        canvas.height = Math.floor(cssH * dpr);
-        canvas.style.width = `${cssW}px`;
-        canvas.style.height = `${cssH}px`;
+        const cssW = Math.max(1, rect.width);
+        const cssH = Math.max(1, rect.height);
+        canvas.width = Math.max(1, Math.ceil(cssW * dpr));
+        canvas.height = Math.max(1, Math.ceil(cssH * dpr));
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
         if (!currentImg || !currentImg.complete || !currentImg.naturalWidth) return;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         const ir = currentImg.naturalWidth / currentImg.naturalHeight;
@@ -479,7 +495,7 @@ export default function ImageEngine({
 
     const u = (name: string) => uniforms[name];
 
-    const coverUV = (imageAspect: number, cssW: number, cssH: number) => {
+    const coverUV = (imageAspect: number, cssW: number, cssH: number, focusY = 0.5) => {
       const canvasAspect = cssW / cssH;
       const ratio = canvasAspect / imageAspect;
       let sx: number;
@@ -491,18 +507,18 @@ export default function ImageEngine({
         sx = ratio;
         sy = 1;
       }
-      return { sx, sy, ox: (1 - sx) / 2, oy: (1 - sy) / 2 };
+      return { sx, sy, ox: (1 - sx) / 2, oy: (1 - sy) * focusY };
     };
 
     const resize = () => {
       const rect = container.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const cssW = Math.max(1, Math.floor(rect.width));
-      const cssH = Math.max(1, Math.floor(rect.height));
-      canvas.width = Math.floor(cssW * dpr);
-      canvas.height = Math.floor(cssH * dpr);
-      canvas.style.width = `${cssW}px`;
-      canvas.style.height = `${cssH}px`;
+      const cssW = Math.max(1, rect.width);
+      const cssH = Math.max(1, rect.height);
+      canvas.width = Math.max(1, Math.ceil(cssW * dpr));
+      canvas.height = Math.max(1, Math.ceil(cssH * dpr));
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
       gl.viewport(0, 0, canvas.width, canvas.height);
 
       const cols = Math.max(1, Math.round(cssW / cellSize));
@@ -516,10 +532,10 @@ export default function ImageEngine({
         // Keep the snapshot texture matched to the (possibly new) canvas size.
         ensureSnapshotSize();
       } else {
-        const a = coverUV(aspectFrom, cssW, cssH);
+        const a = coverUV(aspectFrom, cssW, cssH, tuningFrom.focusY);
         view.sxA = a.sx; view.syA = a.sy; view.oxA = a.ox; view.oyA = a.oy;
       }
-      const b = coverUV(aspectTo, cssW, cssH);
+      const b = coverUV(aspectTo, cssW, cssH, tuningTo.focusY);
       view.sxB = b.sx; view.syB = b.sy; view.oxB = b.ox; view.oyB = b.oy;
 
       const cellPxW = canvas.width / cols;
@@ -594,6 +610,11 @@ export default function ImageEngine({
       gl.uniform1f(u("uCapture"), 1);
       gl.uniform1f(u("uProgress"), transition.progress);
       gl.uniform1f(u("uStagger"), STAGGER);
+      {
+        const p = transition.progress;
+        const sat = tuningFrom.saturation + (tuningTo.saturation - tuningFrom.saturation) * p;
+        gl.uniform1f(u("uSaturation"), sat);
+      }
       gl.uniform2f(u("uGrid"), view.cols, view.rows);
       gl.uniform2f(u("uUVScale"), view.sxA, view.syA);
       gl.uniform2f(u("uUVOffset"), view.oxA, view.oyA);
@@ -642,6 +663,7 @@ export default function ImageEngine({
         "uDarkFillTexFrom",
         "uDarkFillTexTo",
         "uGlow",
+        "uSaturation",
         "uMode",
         "uAA",
         "uCellAspect",
@@ -720,6 +742,7 @@ export default function ImageEngine({
       gl.uniform1f(u("uDarkFillTexFrom"), tuningFrom.darkFillTexture);
       gl.uniform1f(u("uDarkFillTexTo"), tuningTo.darkFillTexture);
       gl.uniform1f(u("uGlow"), lerp(tuningFrom.glow, tuningTo.glow));
+      gl.uniform1f(u("uSaturation"), lerp(tuningFrom.saturation, tuningTo.saturation));
       gl.uniform1f(u("uMode"), cfg.mode === "filled" ? 1 : 0);
       gl.uniform1f(u("uTwinkle"), reduced ? 0 : lerp(tuningFrom.twinkle, tuningTo.twinkle));
       gl.uniform1f(u("uDrift"), reduced ? 0 : lerp(tuningFrom.drift, tuningTo.drift));
@@ -818,6 +841,8 @@ export default function ImageEngine({
             horizonSoftness: blend(tuningFrom.horizonSoftness, tuningTo.horizonSoftness),
             skyTwinkleCalm: blend(tuningFrom.skyTwinkleCalm, tuningTo.skyTwinkleCalm),
             skyDriftDamp: blend(tuningFrom.skyDriftDamp, tuningTo.skyDriftDamp),
+            focusY: blend(tuningFrom.focusY, tuningTo.focusY),
+            saturation: blend(tuningFrom.saturation, tuningTo.saturation),
           };
 
           // Point unit 0 at the baked snapshot (screen space -> identity UV,
@@ -870,6 +895,7 @@ export default function ImageEngine({
       const resolved = resolveTuning(tuning);
       tuningFrom = resolved;
       tuningTo = resolved;
+      resize();
       if (reduced) draw(0);
     };
 
@@ -932,7 +958,7 @@ export default function ImageEngine({
   }, [image]);
 
   return (
-    <div ref={containerRef} className={`relative h-full w-full ${className ?? ""}`}>
+    <div ref={containerRef} className={`relative h-full w-full overflow-hidden ${className ?? ""}`}>
       <canvas ref={canvasRef} className="block h-full w-full" aria-hidden="true" />
     </div>
   );

@@ -5,6 +5,7 @@
   --foreground: #1a1a18;
   --muted: #6b6b66;
   --faint: #9a9a93;
+  --text-panel-width: 32rem;
 }
 
 @theme inline {
@@ -19,6 +20,7 @@
 html,
 body {
   height: 100%;
+  margin: 0;
   overflow: hidden;
 }
 
@@ -87,6 +89,33 @@ body {
 
 .intro-veil--out {
   animation: intro-fade-out 0.35s ease-out both;
+}
+
+.text-panel {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.image-panel {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+@media (min-width: 48rem) {
+  .text-panel {
+    flex: 0 0 var(--text-panel-width);
+    width: var(--text-panel-width);
+    min-width: var(--text-panel-width);
+    max-width: var(--text-panel-width);
+  }
+
+  .image-panel {
+    position: relative;
+    flex: 1 1 0%;
+    min-width: 0;
+    pointer-events: auto;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
