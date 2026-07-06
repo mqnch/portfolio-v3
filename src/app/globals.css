@@ -5,7 +5,7 @@
   --foreground: #1a1a18;
   --muted: #6b6b66;
   --faint: #9a9a93;
-  --text-panel-width: 32rem;
+  --text-panel-width: 34rem;
 }
 
 @theme inline {
