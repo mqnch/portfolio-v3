@@ -159,7 +159,7 @@ export default function SceneSwitcher({
         </div>
 
         <footer className="space-y-4">
-          <nav className="flex items-center gap-5 text-sm">
+          <nav className="flex items-center gap-5 text-sm italic">
             {scenes.map((s, i) => (
               <button
                 key={s.id}

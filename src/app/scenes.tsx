@@ -95,9 +95,33 @@ export const blogImage: ImageTuning = {
 export const defaultImage: ImageTuning = aboutImage;
 
 const experience = [
-  { title: "TribalScale · software engineer", href: "https://www.tribalscale.com", period: "present", logo: "/images/tribalscale.jpg", logoScale: null },
-  { title: "MEMOTEXT · software engineer", href: "https://mtxt.ai", period: "present", logo: "/images/mtxt.png", logoScale: "scale-[1.55]" },
-  { title: "WATonomous · software engineer", href: "https://www.watonomous.ca", period: "2025", logo: "/images/wato.png", logoScale: null },
+  {
+    company: "TribalScale",
+    role: "Software Engineering Intern",
+    location: "Toronto, ON",
+    href: "https://www.tribalscale.com",
+    period: "Present",
+    logo: "/images/tribalscale.jpg",
+    logoScale: null,
+  },
+  {
+    company: "MEMOTEXT",
+    role: "Software Engineering Intern",
+    location: "Toronto, ON",
+    href: "https://mtxt.ai",
+    period: "Present",
+    logo: "/images/mtxt.png",
+    logoScale: "scale-[1.55]",
+  },
+  {
+    company: "WATonomous",
+    role: "Software Engineer",
+    location: "Waterloo, ON",
+    href: "https://www.watonomous.ca",
+    period: "2025",
+    logo: "/images/wato.png",
+    logoScale: null,
+  },
 ];
 
 export type Project = {
@@ -264,29 +288,32 @@ export const scenes: Scene[] = [
     content: (
       <div className="space-y-3 text-lg">
         <p className="text-muted leading-relaxed">where i've worked:</p>
-        <ul className="space-y-1.5">
+        <ul className="space-y-3">
           {experience.map((item) => {
             const logo = item.logoScale ? (
-              <span className="mr-1.5 inline-block h-[1.05em] w-[1.05em] overflow-hidden rounded-sm align-[-0.15em]">
+              <span className="inline-block h-[1.05em] w-[1.05em] overflow-hidden rounded-sm">
                 <img src={item.logo} alt="" className={`h-full w-full object-cover opacity-90 ${item.logoScale}`} />
               </span>
             ) : (
-              <img src={item.logo} alt="" className="mr-1.5 inline-block h-[1.05em] w-[1.05em] rounded-sm object-cover align-[-0.15em] opacity-90" />
+              <img src={item.logo} alt="" className="h-[1.05em] w-[1.05em] rounded-sm object-cover opacity-90" />
+            );
+            const company = item.href ? (
+              <a href={item.href} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
+                {item.company}
+              </a>
+            ) : (
+              <span>{item.company}</span>
             );
             return (
-              <li key={item.title} className="flex items-baseline justify-between gap-3">
-                {item.href ? (
-                  <a href={item.href} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
-                    {logo}
-                    {item.title}
-                  </a>
-                ) : (
-                  <span>
-                    {logo}
-                    {item.title}
-                  </span>
-                )}
-                <span className="text-faint text-sm">{item.period}</span>
+              <li
+                key={item.company}
+                className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-1.5 gap-y-0.5"
+              >
+                <div className="self-start pt-[0.12em]">{logo}</div>
+                <div>{company}</div>
+                <span className="text-faint text-base text-right">{item.period}</span>
+                <p className="text-muted col-span-2 col-start-1 text-base leading-snug">{item.role}</p>
+                <span className="text-faint text-base text-right">{item.location}</span>
               </li>
             );
           })}
