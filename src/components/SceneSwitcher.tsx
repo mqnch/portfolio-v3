@@ -11,12 +11,21 @@ type SceneSwitcherProps = {
 };
 
 const COOLDOWN = 200;
-const WHEEL_THRESHOLD = 10;
-// Pixels of trackpad delta before one scene step. Momentum tail events are
-// absorbed during WHEEL_COOLDOWN instead of triggering extra steps.
-const WHEEL_STEP_ACCUM = 100;
+// Ignore micro-noise; mouse notches are often small in pixel mode.
+const WHEEL_THRESHOLD = 1;
+// After a step, ignore wheel input so trackpad inertia (falling velocity) cannot
+// chain extra scenes. Fixed window so a later intentional swipe can fire again.
 const WHEEL_COOLDOWN = 450;
+// Quiet long enough to treat the next impulse as a fresh rising edge.
+const WHEEL_IDLE_MS = 120;
 const SWIPE_THRESHOLD = 25;
+
+function wheelMagnitude(e: WheelEvent) {
+  const abs = Math.abs(e.deltaY);
+  if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) return abs * 16;
+  if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) return abs * (typeof window !== "undefined" ? window.innerHeight : 800);
+  return abs;
+}
 
 export default function SceneSwitcher({
   scenes = defaultScenes,
@@ -81,31 +90,44 @@ export default function SceneSwitcher({
       });
     };
 
-    let wheelAccum = 0;
-    let wheelIdleTimeout: ReturnType<typeof setTimeout> | null = null;
+    let lastMag = 0;
+    let lastSign = 0;
+    let lastWheelAt = 0;
 
     const onWheel = (e: WheelEvent) => {
       // Let an open project scroll its own content instead of switching scenes.
       if (navLockedRef.current) return;
-      if (Math.abs(e.deltaY) <= WHEEL_THRESHOLD) return;
+
+      const mag = wheelMagnitude(e);
+      if (mag <= WHEEL_THRESHOLD) return;
       e.preventDefault();
-      // Drop momentum tail events while cooling down so one flick stays one step.
-      if (lockedRef.current) return;
 
-      if (wheelAccum !== 0 && Math.sign(e.deltaY) !== Math.sign(wheelAccum)) {
-        wheelAccum = 0;
+      const now = performance.now();
+      const sign = e.deltaY > 0 ? 1 : -1;
+
+      // Keep tracking magnitude while locked so unlock mid-inertia sees a
+      // falling edge (mag <= lastMag) instead of a false "fresh" rise.
+      if (lockedRef.current) {
+        lastMag = mag;
+        lastSign = sign;
+        lastWheelAt = now;
+        return;
       }
-      wheelAccum += e.deltaY;
 
-      if (Math.abs(wheelAccum) >= WHEEL_STEP_ACCUM) {
-        step(wheelAccum > 0 ? 1 : -1, WHEEL_COOLDOWN);
-        wheelAccum = 0;
+      if (now - lastWheelAt > WHEEL_IDLE_MS || sign !== lastSign) {
+        lastMag = 0;
       }
+      lastWheelAt = now;
 
-      if (wheelIdleTimeout) clearTimeout(wheelIdleTimeout);
-      wheelIdleTimeout = setTimeout(() => {
-        wheelAccum = 0;
-      }, 150);
+      // Rising velocity/impulse vs the previous tick(s): mouse notch from idle,
+      // or the accelerating start of a trackpad swipe. Falling inertia will not.
+      const rising = mag > lastMag;
+      lastMag = mag;
+      lastSign = sign;
+
+      if (rising) {
+        step(sign, WHEEL_COOLDOWN);
+      }
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -141,7 +163,6 @@ export default function SceneSwitcher({
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchend", onTouchEnd);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (wheelIdleTimeout) clearTimeout(wheelIdleTimeout);
     };
   }, [lock]);
 
