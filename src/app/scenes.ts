@@ -142,6 +142,15 @@ export type Project = {
 
 export const projects: Project[] = [
   {
+    name: "log-searcher",
+    description: "fast log search agent from rl fine-tuning edge models.",
+    repo: "https://github.com/mqnch/log-searcher",
+    year: "2026",
+    tech: ["rl", "fine-tuning", "prime intellect"],
+    details:
+      "an agent that searches logs instantly by fine-tuning small edge models with reinforcement learning. training and tooling are being built out on prime intellect. wip.",
+  },
+  {
     name: "musicoverlay",
     description: "keyboard-driven macos hud for controlling music without switching apps.",
     repo: "https://github.com/mqnch/musicoverlay",
