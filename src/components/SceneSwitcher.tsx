@@ -1,10 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { scenes as defaultScenes, links, defaultImage, type Scene } from "@/app/scenes";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  scenes as defaultScenes,
+  links,
+  defaultImage,
+  sceneIndexFromPath,
+  type Scene,
+} from "@/app/scenes";
 import ImageEngine from "@/components/ImageEngine";
 
 type SceneSwitcherProps = {
+  children: ReactNode;
   scenes?: Scene[];
   title?: string;
   footerLinks?: { label: string; href: string | null }[];
@@ -23,23 +32,30 @@ const SWIPE_THRESHOLD = 25;
 function wheelMagnitude(e: WheelEvent) {
   const abs = Math.abs(e.deltaY);
   if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) return abs * 16;
-  if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) return abs * (typeof window !== "undefined" ? window.innerHeight : 800);
+  if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE)
+    return abs * (typeof window !== "undefined" ? window.innerHeight : 800);
   return abs;
 }
 
 export default function SceneSwitcher({
+  children,
   scenes = defaultScenes,
   title = "felix pan",
   footerLinks = links,
 }: SceneSwitcherProps) {
-  const [current, setCurrent] = useState(0);
-  const scene = scenes[current];
+  const pathname = usePathname();
+  const router = useRouter();
+  const current = sceneIndexFromPath(pathname);
+  const scene = scenes[current] ?? scenes[0];
 
   const lockedRef = useRef(false);
   // Set while an expanded project (or other overlay) wants to own scrolling and
   // keyboard nav, so we don't switch scenes out from under it.
   const navLockedRef = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Keep current index readable inside stable event handlers without rebinding.
+  const currentRef = useRef(current);
+  currentRef.current = current;
 
   const lock = useCallback((ms = COOLDOWN) => {
     lockedRef.current = true;
@@ -50,26 +66,14 @@ export default function SceneSwitcher({
   }, []);
 
   const goToScene = useCallback(
-    (index: number) => {
-      setCurrent((prev) => {
-        const next = Math.max(0, Math.min(scenes.length - 1, index));
-        if (next === prev) return prev;
-        lock();
-        return next;
-      });
+    (index: number, cooldown = COOLDOWN) => {
+      const next = Math.max(0, Math.min(scenes.length - 1, index));
+      if (next === currentRef.current) return;
+      lock(cooldown);
+      router.push(scenes[next].href);
     },
-    [lock]
+    [lock, router, scenes]
   );
-
-  useEffect(() => {
-    const onNavigate = (e: Event) => {
-      const id = (e as CustomEvent<string>).detail;
-      const index = scenes.findIndex((s) => s.id === id);
-      if (index !== -1) goToScene(index);
-    };
-    window.addEventListener("scene:navigate", onNavigate as EventListener);
-    return () => window.removeEventListener("scene:navigate", onNavigate as EventListener);
-  }, [goToScene]);
 
   useEffect(() => {
     const onLock = (e: Event) => {
@@ -82,12 +86,7 @@ export default function SceneSwitcher({
   useEffect(() => {
     const step = (delta: number, cooldown = COOLDOWN) => {
       if (lockedRef.current) return;
-      setCurrent((prev) => {
-        const next = Math.max(0, Math.min(scenes.length - 1, prev + delta));
-        if (next === prev) return prev;
-        lock(cooldown);
-        return next;
-      });
+      goToScene(currentRef.current + delta, cooldown);
     };
 
     let lastMag = 0;
@@ -164,35 +163,41 @@ export default function SceneSwitcher({
       window.removeEventListener("touchend", onTouchEnd);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [lock]);
+  }, [goToScene]);
 
   return (
     <main className="fixed inset-0 flex flex-col overflow-hidden md:flex-row">
       <div className="text-panel relative z-10 flex h-full flex-col overflow-x-hidden px-6 py-10 md:px-16 md:py-14">
         <header className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+          <h1 className="text-xl font-semibold tracking-tight">
+            <Link href="/" className="hover:opacity-80">
+              {title}
+            </Link>
+          </h1>
         </header>
 
         <div className="flex min-w-0 flex-1 items-center overflow-hidden">
           <div key={scene.id} className="fade w-full min-w-0 space-y-6">
-            {scene.content}
+            {children}
           </div>
         </div>
 
         <footer className="space-y-4">
           <nav className="flex items-center gap-5 text-sm italic">
-            {scenes.map((s, i) => (
-              <button
+            {scenes.map((s) => (
+              <Link
                 key={s.id}
-                type="button"
-                onClick={() => goToScene(i)}
-                aria-current={i === current}
+                href={s.href}
+                aria-current={s.id === scene.id ? "page" : undefined}
+                onClick={() => {
+                  if (s.id !== scene.id) lock();
+                }}
                 className={`underline-offset-4 transition-colors hover:underline ${
-                  i === current ? "text-foreground" : "text-faint hover:text-muted"
+                  s.id === scene.id ? "text-foreground" : "text-faint hover:text-muted"
                 }`}
               >
                 {s.label}
-              </button>
+              </Link>
             ))}
           </nav>
           <div className="flex items-center gap-5 text-sm text-muted">
@@ -228,9 +233,10 @@ export default function SceneSwitcher({
               scene.captionColor ?? "text-faint"
             }`}
             style={{
-              textShadow: scene.captionColor === "text-white"
-                ? "0 1px 3px rgba(0,0,0,0.55)"
-                : "0 1px 3px rgba(250,250,248,0.65)",
+              textShadow:
+                scene.captionColor === "text-white"
+                  ? "0 1px 3px rgba(0,0,0,0.55)"
+                  : "0 1px 3px rgba(250,250,248,0.65)",
             }}
           >
             {scene.caption}

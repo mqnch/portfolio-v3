@@ -1,18 +1,17 @@
-import type { ReactNode } from "react";
 import type { ImageTuning } from "@/components/ImageEngine";
-import ProjectsPanel from "@/components/ProjectsPanel";
 
 export type Scene = {
   id: string;
   /** Short label shown in the scene nav. */
   label: string;
+  /** App Router path for this scene. */
+  href: string;
   /** Background image + its per-image look. Falls back to `defaultImage`. */
   image?: ImageTuning;
   /** Short location label shown over the background image. */
   caption?: string;
   /** Tailwind text-color class for the caption, tuned per image. Defaults to text-faint. */
   captionColor?: string;
-  content: ReactNode;
 };
 
 // Per-image render specs. Each photo gets its own look (where the horizon sits,
@@ -56,7 +55,7 @@ export const builtImage: ImageTuning = {
   horizon: 0.55,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.88,
-  gamma: 0.50,
+  gamma: 0.5,
   glow: 0.08,
   darkFill: 0.72,
   darkFillTexture: 0.4,
@@ -94,7 +93,7 @@ export const blogImage: ImageTuning = {
 /** Image used by scenes that don't declare their own. */
 export const defaultImage: ImageTuning = aboutImage;
 
-const experience = [
+export const experience = [
   {
     company: "TribalScale",
     role: "Software Engineering Intern",
@@ -179,9 +178,7 @@ export const projects: Project[] = [
     tech: ["electron", "typescript", "tailwind", "flask", "huey", "google oauth"],
     details:
       "type something like \"lunch with sam friday at noon\" and cumo parses it into a real calendar event. an always-available command bar that turns plain english into structured scheduling.",
-    images: [
-      { src: "/images/projects/cumo-1.webp", alt: "cumo command bar" },
-    ],
+    images: [{ src: "/images/projects/cumo-1.webp", alt: "cumo command bar" }],
   },
   {
     name: "loan prediction model",
@@ -207,201 +204,52 @@ export const scenes: Scene[] = [
   {
     id: "about",
     label: "about",
+    href: "/",
     caption: "victoria harbor, hk",
-    content: (
-      <p className="text-muted leading-relaxed text-lg">
-        i&apos;m currently studying computer science at{" "}
-        <span className="whitespace-nowrap text-foreground">
-          <img src="/images/uwaterloo.svg" alt="" className="mr-1 inline-block h-[1em] w-[1em] rounded-sm align-[-0.15em] opacity-85" />
-          UWaterloo
-        </span>{" "}
-        &amp; working at{" "}
-        <a
-          href="https://www.tribalscale.com"
-          target="_blank"
-          rel="noreferrer"
-          className="whitespace-nowrap text-foreground border-b border-transparent hover:border-current"
-        >
-          <img src="/images/tribalscale.jpg" alt="" className="mr-1 inline-block h-[1em] w-[1em] rounded-sm align-[-0.15em] opacity-85" />
-          TribalScale
-        </a>{"."}
-        <br />
-        <br />
-        i live to{" "}
-        <button
-          type="button"
-          onClick={() => window.dispatchEvent(new CustomEvent("scene:navigate", { detail: "other" }))}
-          className="text-foreground underline-offset-4 hover:underline"
-        >
-          eat
-        </button>
-        ,{" "}
-        <button
-          type="button"
-          onClick={() => window.dispatchEvent(new CustomEvent("scene:navigate", { detail: "other" }))}
-          className="text-foreground underline-offset-4 hover:underline"
-        >
-          listen
-        </button>
-        , and{" "}
-        <button
-          type="button"
-          onClick={() => window.dispatchEvent(new CustomEvent("scene:navigate", { detail: "other" }))}
-          className="text-foreground underline-offset-4 hover:underline"
-        >
-          travel
-        </button>
-        .
-        <br />
-        <br />
-        when i retire at 29, you can find me on my tea farm in{" "}
-        <a
-          href="https://en.wikipedia.org/wiki/Yixing"
-          target="_blank"
-          rel="noreferrer"
-          className="whitespace-nowrap text-foreground border-b border-transparent hover:border-current"
-        >
-          yixing, china
-        </a>
-        .
-      </p>
-    ),
   },
   {
     id: "work",
     label: "work",
+    href: "/work",
     image: workImage,
     caption: "lugard road trail, hk",
-    content: (
-      <div className="space-y-3 text-lg">
-        <p className="text-muted leading-relaxed">where i've worked:</p>
-        <ul className="space-y-3">
-          {experience.map((item) => {
-            const logo = item.logoScale ? (
-              <span className="inline-block h-[1.05em] w-[1.05em] overflow-hidden rounded-sm">
-                <img src={item.logo} alt="" className={`h-full w-full object-cover opacity-90 ${item.logoScale}`} />
-              </span>
-            ) : (
-              <img src={item.logo} alt="" className="h-[1.05em] w-[1.05em] rounded-sm object-cover opacity-90" />
-            );
-            const company = item.href ? (
-              <a href={item.href} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
-                {item.company}
-              </a>
-            ) : (
-              <span>{item.company}</span>
-            );
-            return (
-              <li
-                key={item.company}
-                className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-1.5 gap-y-0.5"
-              >
-                <div className="self-start pt-[0.12em]">{logo}</div>
-                <div>{company}</div>
-                <span className="text-faint text-base text-right">{item.period}</span>
-                <p className="text-muted col-span-2 col-start-1 text-base leading-snug">{item.role}</p>
-                <span className="text-faint text-base text-right">{item.location}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    ),
   },
   {
-    id: "building",
+    id: "built",
     label: "built",
+    href: "/built",
     image: builtImage,
     caption: "brooklyn botanical garden, nyc",
     captionColor: "text-white",
-    content: <ProjectsPanel />,
   },
   {
     id: "writing",
     label: "writing",
+    href: "/writing",
     image: blogImage,
     caption: "osaka aquarium",
     captionColor: "text-foreground",
-    content: (
-      <p className="text-muted leading-relaxed text-lg">
-        life is sunshine and rainbows
-      </p>
-    ),
   },
   {
     id: "other",
     label: "other",
+    href: "/other",
     image: otherImage,
     caption: "train from nara to kyoto",
     captionColor: "text-white",
-    content: (
-      <p className="text-muted leading-relaxed text-lg">
-        i rank every place i eat on beli{" "}
-        <span className="text-foreground">@felixpan</span>. my top-rated spot
-        is{" "}
-        <a
-          href="https://maps.app.goo.gl/MyCh9r3YLmio7fGu5"
-          target="_blank"
-          rel="noreferrer"
-          className="text-foreground underline-offset-4 hover:underline"
-        >
-          Namaste Nepal
-        </a>
-        , a nepalese
-        restaurant in tokyo.
-        <br />
-        <br />
-        my favorite artist this year is{" "}
-        <a
-          href="https://open.spotify.com/artist/1swF0fjO1rWmJEbygzTpf2"
-          target="_blank"
-          rel="noreferrer"
-          className="text-foreground underline-offset-4 hover:underline"
-        >
-          reiko
-        </a>
-        .
-        here's my top 3:
-        <br />
-        <a
-          href="https://open.spotify.com/track/5tdLqrYYsKP5TxT8RJ3VtQ"
-          target="_blank"
-          rel="noreferrer"
-          className="text-foreground underline-offset-4 hover:underline"
-        >
-          wantmetoo · reiko
-        </a>
-        <br />
-        <a
-          href="https://open.spotify.com/track/6Cgdqm78siouXhd4NlMYn3"
-          target="_blank"
-          rel="noreferrer"
-          className="text-foreground underline-offset-4 hover:underline"
-        >
-          maybes · reiko
-        </a>
-        <br />
-        <a
-          href="https://open.spotify.com/track/4xVoUumxOenynyfVwoZGZi?si=d3defcfdddef45da"
-          target="_blank"
-          rel="noreferrer"
-          className="text-foreground underline-offset-4 hover:underline"
-        >
-          worth your time / nothing at all · kiyu, reiko
-        </a>
-        <br />
-        <br />
-        so far i&apos;ve gone on{" "}
-        <span className="text-foreground font-medium">28</span> major trips in my{" "}
-        <span className="text-foreground font-medium">19</span> years of living.
-        <br />
-        this winter i&apos;m planning to travel to{" "}
-        <span className="text-foreground">south korea</span> and revisit{" "}
-        <span className="text-foreground">china</span>.
-      </p>
-    ),
   },
 ];
+
+export function normalizePath(pathname: string): string {
+  const trimmed = pathname.replace(/\/$/, "");
+  return trimmed === "" ? "/" : trimmed;
+}
+
+export function sceneIndexFromPath(pathname: string): number {
+  const path = normalizePath(pathname);
+  const index = scenes.findIndex((s) => s.href === path);
+  return index === -1 ? 0 : index;
+}
 
 export const links: { label: string; href: string | null }[] = [
   { label: "github", href: "https://github.com/mqnch" },

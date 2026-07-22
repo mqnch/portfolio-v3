@@ -17,7 +17,10 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "felix pan",
+  title: {
+    default: "felix pan",
+    template: "%s · felix pan",
+  },
   description: "personal site",
 };
 
