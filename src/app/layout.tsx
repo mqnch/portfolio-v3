@@ -16,12 +16,30 @@ const geist = Geist({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://felixpan.ca";
+const siteDescription =
+  "felix pan — cs @ uwaterloo, software engineer. work, things i've built, and other notes.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "felix pan",
     template: "%s · felix pan",
   },
-  description: "personal site",
+  description: siteDescription,
+  openGraph: {
+    type: "website",
+    url: siteUrl,
+    title: "felix pan",
+    description: siteDescription,
+    siteName: "felix pan",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "felix pan",
+    description: siteDescription,
+  },
 };
 
 export default function RootLayout({
