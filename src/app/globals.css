@@ -32,6 +32,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+img,
+a {
+  -webkit-user-drag: none;
+}
+
 @keyframes fade {
   from {
     opacity: 0;

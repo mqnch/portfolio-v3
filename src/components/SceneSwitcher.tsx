@@ -170,7 +170,12 @@ export default function SceneSwitcher({
       <div className="text-panel relative z-10 flex h-full flex-col overflow-x-hidden px-6 py-10 md:px-16 md:py-14">
         <header className="flex items-center gap-3">
           <h1 className="text-xl font-semibold tracking-tight">
-            <Link href="/" className="hover:opacity-80">
+            <Link
+              href="/"
+              draggable={false}
+              onDragStart={(e) => e.preventDefault()}
+              className="select-none hover:opacity-80"
+            >
               {title}
             </Link>
           </h1>
@@ -188,11 +193,13 @@ export default function SceneSwitcher({
               <Link
                 key={s.id}
                 href={s.href}
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
                 aria-current={s.id === scene.id ? "page" : undefined}
                 onClick={() => {
                   if (s.id !== scene.id) lock();
                 }}
-                className={`underline-offset-4 transition-colors hover:underline ${
+                className={`select-none underline-offset-4 transition-colors hover:underline ${
                   s.id === scene.id ? "text-foreground" : "text-faint hover:text-muted"
                 }`}
               >
@@ -208,12 +215,14 @@ export default function SceneSwitcher({
                   href={link.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="underline-offset-4 hover:text-foreground hover:underline"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  className="select-none underline-offset-4 hover:text-foreground hover:underline"
                 >
                   {link.label}
                 </a>
               ) : (
-                <span key={link.label} className="text-faint">
+                <span key={link.label} className="text-faint select-none">
                   {link.label}
                 </span>
               )
