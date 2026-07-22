@@ -109,7 +109,7 @@ const experience = [
     role: "Software Engineering Intern",
     location: "Toronto, ON",
     href: "https://mtxt.ai",
-    period: "Present",
+    period: "2026",
     logo: "/images/mtxt.png",
     logoScale: "scale-[1.55]",
   },
@@ -215,7 +215,7 @@ export const scenes: Scene[] = [
           <img src="/images/uwaterloo.svg" alt="" className="mr-1 inline-block h-[1em] w-[1em] rounded-sm align-[-0.15em] opacity-85" />
           UWaterloo
         </span>{" "}
-        &amp; building agents at{" "}
+        &amp; working at{" "}
         <a
           href="https://www.tribalscale.com"
           target="_blank"
@@ -224,20 +224,7 @@ export const scenes: Scene[] = [
         >
           <img src="/images/tribalscale.jpg" alt="" className="mr-1 inline-block h-[1em] w-[1em] rounded-sm align-[-0.15em] opacity-85" />
           TribalScale
-        </a>{" "}
-        &amp;{" "}
-        <a
-          href="https://mtxt.ai"
-          target="_blank"
-          rel="noreferrer"
-          className="whitespace-nowrap text-foreground border-b border-transparent hover:border-current"
-        >
-          <span className="mr-1 inline-block h-[1em] w-[1em] overflow-hidden rounded-sm align-[-0.15em]">
-            <img src="/images/mtxt.png" alt="" className="h-full w-full scale-[1.6] opacity-85" />
-          </span>
-          MEMOTEXT
-        </a>
-        .
+        </a>{"."}
         <br />
         <br />
         i live to{" "}
@@ -405,7 +392,7 @@ export const scenes: Scene[] = [
         <br />
         <br />
         so far i&apos;ve gone on{" "}
-        <span className="text-foreground font-medium">28</span> trips in my{" "}
+        <span className="text-foreground font-medium">28</span> major trips in my{" "}
         <span className="text-foreground font-medium">19</span> years of living.
         <br />
         this winter i&apos;m planning to travel to{" "}
