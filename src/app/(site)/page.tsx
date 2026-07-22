@@ -26,7 +26,7 @@ export default function AboutPage() {
         />
         TribalScale
       </a>
-      {"."}
+      {" as a software engineer."}
       <br />
       <br />
       i live to{" "}

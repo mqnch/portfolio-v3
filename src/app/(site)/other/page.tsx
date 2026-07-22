@@ -21,7 +21,7 @@ export default function OtherPage() {
       , a nepalese restaurant in tokyo.
       <br />
       <br />
-      my favorite artist this year is{" "}
+      my favorite artist right now is{" "}
       <a
         href="https://open.spotify.com/artist/1swF0fjO1rWmJEbygzTpf2"
         target="_blank"
