@@ -466,6 +466,12 @@ export default function ImageEngine({
     let fromIsSnapshot = false;
     let raf = 0;
     let textureReady = false;
+    // Pause the loop when the canvas is scrolled offscreen; resume on re-entry.
+    let visible = true;
+    // After transitions settle, skip frames down to ~30fps so idle twinkle/drift
+    // still moves without burning a full refresh-rate redraw on phones.
+    let lastDrawMs = 0;
+    const IDLE_FRAME_MS = 1000 / 30;
     const uniforms: Record<string, WebGLUniformLocation | null> = {};
 
     const view = {
@@ -773,16 +779,23 @@ export default function ImageEngine({
     };
 
     const loop = (time: number) => {
-      draw(time);
+      if (!visible) return;
+      // Full refresh during dissolves; ~30fps once settled.
+      const interval = transition.active ? 0 : IDLE_FRAME_MS;
+      if (interval === 0 || time - lastDrawMs >= interval) {
+        lastDrawMs = time;
+        draw(time);
+      }
       raf = requestAnimationFrame(loop);
     };
 
     const start = () => {
-      if (!textureReady) return;
+      if (!textureReady || !visible) return;
       if (reduced) {
         draw(0);
       } else {
         cancelAnimationFrame(raf);
+        lastDrawMs = 0; // force an immediate draw on resume / new transition
         raf = requestAnimationFrame(loop);
       }
     };
@@ -912,6 +925,22 @@ export default function ImageEngine({
     });
     ro.observe(container);
 
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const next = !!entry && entry.isIntersecting && entry.intersectionRatio > 0;
+        if (next === visible) return;
+        visible = next;
+        if (visible) {
+          start();
+        } else {
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+      },
+      { threshold: 0 },
+    );
+    io.observe(container);
+
     const onLost = (e: Event) => {
       e.preventDefault();
       cancelAnimationFrame(raf);
@@ -929,6 +958,7 @@ export default function ImageEngine({
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      io.disconnect();
       canvas.removeEventListener("webglcontextlost", onLost);
       canvas.removeEventListener("webglcontextrestored", onRestored);
       engineRef.current = null;

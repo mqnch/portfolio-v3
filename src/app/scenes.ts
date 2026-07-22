@@ -21,7 +21,7 @@ export type Scene = {
 // Hong Kong harbour from the Peak. Horizon sits just below mid-frame; the sky is
 // kept calm so the clouds don't shine or shimmer.
 export const aboutImage: ImageTuning = {
-  src: "/images/IMG_7933.webp",
+  src: "/images/IMG_7933.8ef94cab.webp",
   horizon: 0.48,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.78,
@@ -33,7 +33,7 @@ export const aboutImage: ImageTuning = {
 // Work photo: the skyline rises much higher in frame, so push the horizon up and
 // keep the (smaller) band of sky above it calm.
 export const workImage: ImageTuning = {
-  src: "/images/IMG_7972_2.webp",
+  src: "/images/IMG_7972_2.d3b11658.webp",
   horizon: 0.55,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.85,
@@ -51,7 +51,7 @@ export const workImage: ImageTuning = {
 
 // Built photo: garden pond with bright reflections; deepen greens and cut glare.
 export const builtImage: ImageTuning = {
-  src: "/images/IMG_9608.webp",
+  src: "/images/IMG_9608.c0c85538.webp",
   horizon: 0.55,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.88,
@@ -65,7 +65,7 @@ export const builtImage: ImageTuning = {
 // Other photo: rice paddy with a transmission tower under a big blue sky. The
 // mountains/horizon sit just below mid-frame, with lots of calm sky above.
 export const otherImage: ImageTuning = {
-  src: "/images/IMG_7630.webp",
+  src: "/images/IMG_7630.4134fb69.webp",
   horizon: 0.58,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.8,
@@ -80,7 +80,7 @@ export const otherImage: ImageTuning = {
 // twinkle). Lower gamma lifts the dim fish/detail out of the dark water, and a
 // little darkFill keeps the darkest corners reading as ink rather than paper.
 export const blogImage: ImageTuning = {
-  src: "/images/IMG_7480.webp",
+  src: "/images/IMG_7480.f1b1eef0.webp",
   horizon: 1,
   skyTwinkleCalm: 1,
   skyDriftDamp: 0.9,
@@ -100,7 +100,7 @@ export const experience = [
     location: "Toronto, ON",
     href: "https://www.tribalscale.com",
     period: "Present",
-    logo: "/images/tribalscale.jpg",
+    logo: "/images/tribalscale.36350c1c.jpg",
     logoScale: null,
   },
   {
@@ -109,7 +109,7 @@ export const experience = [
     location: "Toronto, ON",
     href: "https://mtxt.ai",
     period: "2026",
-    logo: "/images/mtxt.png",
+    logo: "/images/mtxt.705ae0c1.png",
     logoScale: "scale-[1.55]",
   },
   {
@@ -118,7 +118,7 @@ export const experience = [
     location: "Waterloo, ON",
     href: "https://www.watonomous.ca",
     period: "2025",
-    logo: "/images/wato.png",
+    logo: "/images/wato.170c75f7.png",
     logoScale: null,
   },
 ];
@@ -150,8 +150,8 @@ export const projects: Project[] = [
     details:
       "a translucent heads-up display that floats over any app. trigger it with a global hotkey to scrub, skip, and search your library without ever leaving what you're doing. built natively for macos with a focus on speed and staying out of the way.",
     images: [
-      { src: "/images/projects/musicoverlay-1.webp", alt: "musicoverlay hud" },
-      { src: "/images/projects/musicoverlay-2.webp", alt: "musicoverlay minihud" },
+      { src: "/images/projects/musicoverlay-1.e27fc25d.webp", alt: "musicoverlay hud" },
+      { src: "/images/projects/musicoverlay-2.eb1707c9.webp", alt: "musicoverlay minihud" },
     ],
   },
   {
@@ -164,9 +164,9 @@ export const projects: Project[] = [
     details:
       "aggregates fresh internship postings from across the web and gives you a single board to track every application's status. nightly scrapers keep listings current so you spend less time hunting and more time applying.",
     images: [
-      { src: "/images/projects/getajobchud-1.webp", alt: "getajobchud hero" },
-      { src: "/images/projects/getajobchud-2.webp", alt: "getajobchud listings" },
-      { src: "/images/projects/getajobchud-3.webp", alt: "getajobchud applications" },
+      { src: "/images/projects/getajobchud-1.a31cac57.webp", alt: "getajobchud hero" },
+      { src: "/images/projects/getajobchud-2.eab306c4.webp", alt: "getajobchud listings" },
+      { src: "/images/projects/getajobchud-3.18979b8d.webp", alt: "getajobchud applications" },
     ],
   },
   {
@@ -178,7 +178,7 @@ export const projects: Project[] = [
     tech: ["electron", "typescript", "tailwind", "flask", "huey", "google oauth"],
     details:
       "type something like \"lunch with sam friday at noon\" and cumo parses it into a real calendar event. an always-available command bar that turns plain english into structured scheduling.",
-    images: [{ src: "/images/projects/cumo-1.webp", alt: "cumo command bar" }],
+    images: [{ src: "/images/projects/cumo-1.bc8e4c4d.webp", alt: "cumo command bar" }],
   },
   {
     name: "loan prediction model",

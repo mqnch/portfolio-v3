@@ -6,7 +6,7 @@ export default function AboutPage() {
       i&apos;m currently studying computer science at{" "}
       <span className="whitespace-nowrap text-foreground">
         <img
-          src="/images/uwaterloo.svg"
+          src="/images/uwaterloo.7db97a20.svg"
           alt=""
           className="mr-1 inline-block h-[1em] w-[1em] rounded-sm align-[-0.15em] opacity-85"
         />
@@ -20,7 +20,7 @@ export default function AboutPage() {
         className="whitespace-nowrap text-foreground border-b border-transparent hover:border-current"
       >
         <img
-          src="/images/tribalscale.jpg"
+          src="/images/tribalscale.36350c1c.jpg"
           alt=""
           className="mr-1 inline-block h-[1em] w-[1em] rounded-sm align-[-0.15em] opacity-85"
         />
