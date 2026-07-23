@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function OtherPage() {
   return (
     <p className="text-muted leading-relaxed text-lg">
-      i rank every place i eat on beli{" "}
+      i rank every place i eat at on beli{" "}
       <span className="text-foreground">@felixpan</span>. my top-rated spot is{" "}
       <a
         href="https://maps.app.goo.gl/MyCh9r3YLmio7fGu5"

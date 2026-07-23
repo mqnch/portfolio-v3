@@ -151,6 +151,15 @@ export const projects: Project[] = [
       "an agent that searches logs instantly by fine-tuning small edge models with reinforcement learning. training and tooling are being built out on prime intellect. wip.",
   },
   {
+    name: "sweatshop",
+    description: "automated ticket → pr pipeline.",
+    repo: "https://github.com/mqnch/sweatshop",
+    year: "2026",
+    tech: ["agents"],
+    details:
+      "takes a ticket and drives it through plan → implement → review → pr with minimal babysitting. a scripted agent loop with iteration caps and a human merge gate. wip.",
+  },
+  {
     name: "musicoverlay",
     description: "keyboard-driven macos hud for controlling music without switching apps.",
     repo: "https://github.com/mqnch/musicoverlay",
@@ -169,7 +178,7 @@ export const projects: Project[] = [
     website: "https://www.getajobchud.com",
     repo: "https://github.com/mqnch/jobmaxxing",
     year: "2025",
-    tech: ["next.js", "typescript", "tailwind", "supabase"],
+    tech: ["next.js", "typescript", "supabase"],
     details:
       "aggregates fresh internship postings from across the web and gives you a single board to track every application's status. nightly scrapers keep listings current so you spend less time hunting and more time applying.",
     images: [
@@ -184,19 +193,10 @@ export const projects: Project[] = [
     website: "https://trycumo.com",
     repo: "https://github.com/mqnch/Cumo",
     year: "2024",
-    tech: ["electron", "typescript", "tailwind", "flask", "huey", "google oauth"],
+    tech: ["electron", "typescript", "flask", "nlp"],
     details:
       "type something like \"lunch with sam friday at noon\" and cumo parses it into a real calendar event. an always-available command bar that turns plain english into structured scheduling.",
     images: [{ src: "/images/projects/cumo-1.bc8e4c4d.webp", alt: "cumo command bar" }],
-  },
-  {
-    name: "loan prediction model",
-    description: "cox survival model predicting loan default risk with fairness analysis.",
-    repo: "https://github.com/mqnch/loan-prediction-model",
-    year: "2024",
-    tech: ["xgboost", "scikit-learn", "pandas", "shap"],
-    details:
-      "a cox proportional-hazards survival model that predicts the timing of loan default rather than just a yes/no, paired with a fairness analysis across demographic groups to surface and quantify bias in the predictions.",
   },
   {
     name: "self-learning chess ai",
