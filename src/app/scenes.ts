@@ -142,22 +142,13 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    name: "log-searcher",
-    description: "fast log search agent from rl fine-tuning edge models.",
-    repo: "https://github.com/mqnch/log-searcher",
+    name: "felixs-tools",
+    description: "modular cli toolkit — log search, code graphs, and swarm pipelines.",
+    repo: "https://github.com/mqnch/felixs-tools",
     year: "2026",
-    tech: ["rl", "fine-tuning", "prime intellect"],
+    tech: ["python", "rl", "agents"],
     details:
-      "an agent that searches logs instantly by fine-tuning small edge models with reinforcement learning. training and tooling are being built out on prime intellect. wip.",
-  },
-  {
-    name: "sweatshop",
-    description: "automated ticket → pr pipeline.",
-    repo: "https://github.com/mqnch/sweatshop",
-    year: "2026",
-    tech: ["agents"],
-    details:
-      "takes a ticket and drives it through plan → implement → review → pr with minimal babysitting. a scripted agent loop with iteration caps and a human merge gate. wip.",
+      "a personal monorepo of packages i've built and use together to build 10x faster and smarter: logger for parse/index/query, brain for git co-change graphs, swarm for preset dag pipelines, and a router wrapping litellm. use `felix` as the cli entrypoint. wip.",
   },
   {
     name: "musicoverlay",
