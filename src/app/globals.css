@@ -99,9 +99,6 @@ a {
 .text-panel {
   width: 100%;
   flex-shrink: 0;
-  /* Opaque so the absolute full-bleed image-panel (opacity-15 below md)
-     can't wash a bright vertical band through the decals/copy. */
-  background: var(--background);
 }
 
 .image-panel {

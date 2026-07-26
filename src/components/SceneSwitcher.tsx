@@ -277,7 +277,7 @@ export default function SceneSwitcher({
     <main className="fixed inset-0 flex flex-col overflow-hidden md:flex-row">
       <div className="text-panel relative z-10 flex h-full flex-col overflow-hidden px-6 py-10 md:px-16 md:py-14">
         <div
-          className="pointer-events-none absolute inset-0 z-0 overflow-visible"
+          className="pointer-events-none absolute inset-0 z-0 hidden overflow-visible md:block"
           aria-hidden
         >
           {exitLayer && <DecalEngine key={exitLayer.id} layer={exitLayer} />}
