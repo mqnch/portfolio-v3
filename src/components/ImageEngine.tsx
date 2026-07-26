@@ -45,6 +45,48 @@ export type ImageTuning = {
   focusY?: number;
   /** Color saturation multiplier; 1 = unchanged, >1 = richer color. */
   saturation?: number;
+  /**
+   * Luma below this (after gamma) is treated as empty paper — no dots.
+   * Useful for cutout decals so near-black compression/fringe doesn't haze.
+   * 0 keeps the default behaviour. Does not change scene photos unless set.
+   */
+  inkFloor?: number;
+  /**
+   * Multiplier on each dot's RGB (coverage / alpha unchanged). 1 = texture
+   * color as-is; <1 grays the ink down; >1 lifts it toward white. Meant for
+   * cutout linework decals — leave unset on scene photos.
+   */
+  inkBrightness?: number;
+  /**
+   * Cutout / decal mode: empty cells write transparent alpha instead of paper,
+   * so black backgrounds don't leave a gray dotted rectangle. Scene photos
+   * leave this unset. Also switches the texture filter to nearest to reduce
+   * black fringe from bilinear bleed into the subject.
+   */
+  cutout?: boolean;
+};
+
+/** Sentinel src for dissolve-to-empty (transparent cutout / paper white). */
+export const EMPTY_IMAGE_SRC = "";
+
+/** Transparent cutout target — dissolve a decal here to clear it to paper. */
+export const emptyImage: ImageTuning = {
+  src: EMPTY_IMAGE_SRC,
+  cutout: true,
+  darkFill: 0,
+  darkFillTexture: 0,
+  glow: 0,
+  gamma: 1,
+  minDot: 0,
+  inkFloor: 0,
+  inkBrightness: 1,
+  twinkle: false,
+  drift: false,
+  horizon: 1,
+  skyTwinkleCalm: 0,
+  skyDriftDamp: 0,
+  saturation: 1,
+  pixelScale: 1,
 };
 
 const DEFAULT_TUNING = {
@@ -62,6 +104,9 @@ const DEFAULT_TUNING = {
   skyDriftDamp: 0.78,
   focusY: 0.5,
   saturation: 1,
+  inkFloor: 0,
+  inkBrightness: 1,
+  cutout: false,
 } satisfies Omit<Required<ImageTuning>, "src">;
 
 type ResolvedTuning = {
@@ -79,6 +124,9 @@ type ResolvedTuning = {
   skyDriftDamp: number;
   focusY: number;
   saturation: number;
+  inkFloor: number;
+  inkBrightness: number;
+  cutout: number;
 };
 
 function resolveTuning(t: ImageTuning): ResolvedTuning {
@@ -97,6 +145,9 @@ function resolveTuning(t: ImageTuning): ResolvedTuning {
     skyDriftDamp: t.skyDriftDamp ?? DEFAULT_TUNING.skyDriftDamp,
     focusY: t.focusY ?? DEFAULT_TUNING.focusY,
     saturation: t.saturation ?? DEFAULT_TUNING.saturation,
+    inkFloor: t.inkFloor ?? DEFAULT_TUNING.inkFloor,
+    inkBrightness: t.inkBrightness ?? DEFAULT_TUNING.inkBrightness,
+    cutout: (t.cutout ?? DEFAULT_TUNING.cutout) ? 1 : 0,
   };
 }
 
@@ -142,6 +193,9 @@ uniform float uDarkFillTexFrom;
 uniform float uDarkFillTexTo;
 uniform float uGlow;
 uniform float uSaturation;
+uniform float uInkFloor;
+uniform float uInkBrightness;
+uniform float uCutout;
 uniform float uMode;
 uniform float uAA;
 uniform float uCellAspect;
@@ -200,22 +254,27 @@ float driftField(vec2 p, float t) {
   return fbm(p + 1.6 * warp);
 }
 
-vec3 sampleCell(vec2 cell, float drift, out float b) {
+vec3 sampleCell(vec2 cell, float drift, out float b, out float srcAlpha) {
   vec2 center = (cell + 0.5) / uGrid;
   vec2 uvA = center * uUVScale + uUVOffset;
   vec2 uvB = center * uUVScale2 + uUVOffset2;
-  vec3 colA = texture2D(uTex, uvA).rgb;
-  vec3 colB = texture2D(uTex2, uvB).rgb;
+  vec4 texA = texture2D(uTex, uvA);
+  vec4 texB = texture2D(uTex2, uvB);
   // Per-cell staggered dissolve: each cell flips to the new image at a
   // slightly different point in the transition, so the image emerges as a
   // pixel-by-pixel dissolve rather than a flat crossfade.
   float delay = hash(cell) * uStagger;
   float localMix = smoothstep(delay, delay + (1.0 - uStagger), uProgress);
-  vec3 col = mix(colA, colB, localMix);
+  vec3 col = mix(texA.rgb, texB.rgb, localMix);
+  float alpha = mix(texA.a, texB.a, localMix);
+  srcAlpha = alpha;
   float gray = dot(col, vec3(0.2126, 0.7152, 0.0722));
   col = mix(vec3(gray), col, uSaturation);
   float luma = dot(col, vec3(0.2126, 0.7152, 0.0722));
   luma = pow(luma, uGamma);
+  // Optional ink floor: treat near-black as empty paper. Default 0 = no-op
+  // for scene photos; cutout decals can raise this for leftover fringe.
+  if (luma < uInkFloor) luma = 0.0;
   // Above the horizon (sky) twinkle is calmed toward only-bright-cells so it
   // stays still; below it (ocean) everything keeps full shimmer. Each image
   // keeps its OWN horizon and we blend the two by the same per-cell dissolve
@@ -233,6 +292,9 @@ vec3 sampleCell(vec2 cell, float drift, out float b) {
   float twW = mix(twWFrom, twWTo, localMix);
   float tw = 1.0 + uTwinkle * 0.6 * twW * sin(uTime * 2.4 + hash(cell) * 6.2831);
   b = clamp(luma * tw * drift, 0.0, 1.0);
+  // Cutout decals: texture alpha masks ink. Transparent (keyed) pixels
+  // produce no dots. Scene photos upload opaque RGB (alpha = 1).
+  if (uCutout > 0.5) b *= alpha;
   return col;
 }
 
@@ -244,19 +306,25 @@ void main() {
   // mix() the halftone derives its luma from) into an offscreen texture. Used
   // when a transition is interrupted so the half-dissolved pixel field becomes
   // the new "from" image. No halftone/glow/twinkle/drift here — the next pass
-  // re-derives those from this color field.
+  // re-derives those from this color field. Cutouts keep mixed alpha so a
+  // dissolve-to-empty snapshot stays transparent where ink has already cleared.
   if (uCapture > 0.5) {
     vec2 center = (baseCell + 0.5) / uGrid;
     vec2 uvA = center * uUVScale + uUVOffset;
     vec2 uvB = center * uUVScale2 + uUVOffset2;
-    vec3 colA = texture2D(uTex, uvA).rgb;
-    vec3 colB = texture2D(uTex2, uvB).rgb;
+    vec4 texA = texture2D(uTex, uvA);
+    vec4 texB = texture2D(uTex2, uvB);
     float delay = hash(baseCell) * uStagger;
     float localMix = smoothstep(delay, delay + (1.0 - uStagger), uProgress);
-    vec3 col = mix(colA, colB, localMix);
+    vec3 col = mix(texA.rgb, texB.rgb, localMix);
+    float a = mix(texA.a, texB.a, localMix);
     float gray = dot(col, vec3(0.2126, 0.7152, 0.0722));
     col = mix(vec3(gray), col, uSaturation);
-    gl_FragColor = vec4(col, 1.0);
+    if (uCutout > 0.5) {
+      gl_FragColor = vec4(col, a);
+    } else {
+      gl_FragColor = vec4(col, 1.0);
+    }
     return;
   }
 
@@ -271,10 +339,19 @@ void main() {
   float skyDamp = mix(skyDampFrom, skyDampTo, baseMix);
   float drift = 1.0 + uDrift * 0.7 * skyDamp * (driftField(frag * 0.045, uTime) - 0.45);
 
-  if (uMode > 0.5) {
+    if (uMode > 0.5) {
     float b;
-    vec3 col = sampleCell(baseCell, drift, b);
-    gl_FragColor = vec4(col + uGlow * b * b, 1.0);
+    float srcAlpha;
+    vec3 col = sampleCell(baseCell, drift, b, srcAlpha);
+    if (uCutout > 0.5) {
+      // Cutout filled: texture alpha is the stroke mask. Do NOT gate on luma
+      // (b) — pure-black linework has luma 0 and would vanish entirely.
+      vec3 outCol = (col + uGlow * b * b) * uInkBrightness;
+      float a = srcAlpha;
+      gl_FragColor = vec4(outCol * a, a);
+    } else {
+      gl_FragColor = vec4((col + uGlow * b * b) * uInkBrightness, 1.0);
+    }
     return;
   }
 
@@ -285,7 +362,8 @@ void main() {
       vec2 cell = baseCell + vec2(float(i), float(j));
       if (cell.x < 0.0 || cell.y < 0.0 || cell.x >= uGrid.x || cell.y >= uGrid.y) continue;
       float b;
-      vec3 col = sampleCell(cell, drift, b);
+      float srcAlpha;
+      vec3 col = sampleCell(cell, drift, b, srcAlpha);
       // Fade the minimum-dot floor out for near-black cells so dark
       // corners stop rendering a static grid of tiny dots.
       float radius = 0.5 * uPixelScale * sqrt(b) + uMinDot * smoothstep(0.02, 0.18, b);
@@ -300,7 +378,21 @@ void main() {
       // through — that keeps the dark areas dark. The reach extends across the
       // whole shadow range (not just pure black) so dim foreground reads dark.
       float fillMask = 1.0 - smoothstep(0.0, 0.32, b);
-      radius += darkFillHere * fillMask;
+      // Cutout: darkFill is for ink strokes only — never fill keyed-empty cells
+      // (those have srcAlpha ~ 0 but would otherwise get a full darkFill radius).
+      if (uCutout > 0.5) fillMask *= srcAlpha;
+      // Pure-black cutout strokes have luma 0, so the usual twinkle-on-b path
+      // never moves them. Drive life through darkFill radius + grain instead.
+      float cutoutLive = 1.0;
+      if (uCutout > 0.5 && fillMask > 0.001) {
+        float tw = 1.0 + uTwinkle * 0.45 * sin(uTime * 2.4 + hash(cell) * 6.2831);
+        cutoutLive = tw * mix(1.0, drift, 0.55);
+      }
+      radius += darkFillHere * fillMask * cutoutLive;
+      // Empty cells (transparent / pure black, no darkFill) must not draw.
+      // With radius 0, AA around the cell center still produced ~0.5 coverage,
+      // which turned keyed-black cutout backgrounds into a gray dotted field.
+      if (radius <= 0.0001) continue;
       vec2 d = frag - (cell + 0.5);
       d.y *= uCellAspect;
       float dist = length(d) - radius;
@@ -312,11 +404,21 @@ void main() {
         // stays dark instead of letting the bright paper through.
         float darkFillTex = mix(uDarkFillTexFrom, uDarkFillTexTo, cellMix);
         float grain = darkFillTex * 0.22 * hash(cell + 13.7) * fillMask;
+        // Cutout: shimmer grain with the same live factor so ink twinkles.
+        if (uCutout > 0.5) grain *= cutoutLive;
         bestCol = col + uGlow * b * b + grain;
       }
     }
   }
-  gl_FragColor = vec4(mix(uBg, bestCol, bestCover), 1.0);
+  bestCol *= uInkBrightness;
+  // Cutout decals: write coverage as alpha so empty cells are truly
+  // transparent. Premultiply RGB so zero-alpha pixels stay invisible even
+  // when RGB would otherwise be paper/black. Scene photos keep uCutout at 0.
+  if (uCutout > 0.5) {
+    gl_FragColor = vec4(bestCol * bestCover, bestCover);
+  } else {
+    gl_FragColor = vec4(mix(uBg, bestCol, bestCover), 1.0);
+  }
 }
 `;
 
@@ -390,7 +492,10 @@ export default function ImageEngine({
     const STAGGER = 0.6;
 
     const gl = canvas.getContext("webgl", {
-      premultipliedAlpha: false,
+      alpha: true,
+      // Cutout decals write premultiplied alpha; opaque scene photos (a=1) are
+      // identical either way.
+      premultipliedAlpha: true,
       antialias: true,
     }) as WebGLRenderingContext | null;
 
@@ -419,6 +524,18 @@ export default function ImageEngine({
         ctx.drawImage(currentImg, (cssW - dw) / 2, (cssH - dh) / 2, dw, dh);
       };
       const load = (s: string) => {
+        if (!s) {
+          currentImg = null;
+          if (ctx) {
+            const rect = container.getBoundingClientRect();
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = Math.max(1, Math.ceil(rect.width * dpr));
+            canvas.height = Math.max(1, Math.ceil(rect.height * dpr));
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+          return;
+        }
         const next = new Image();
         next.onload = () => {
           currentImg = next;
@@ -494,7 +611,10 @@ export default function ImageEngine({
 
     // The image element currently shown (the "to" texture's source), kept so we
     // can re-upload it into the "from" texture when a new transition begins.
+    // Null when the current target is the empty/transparent sentinel.
     let currentImg: HTMLImageElement | null = null;
+    // True once we've committed any first frame (photo or empty) into both textures.
+    let hasContent = false;
     let aspectFrom = 1;
     let aspectTo = 1;
     let loadToken = 0;
@@ -550,16 +670,47 @@ export default function ImageEngine({
       view.cellAspect = cellPxH / cellPxW;
     };
 
-    const uploadImage = (tex: WebGLTexture | null, unit: number, image: TexImageSource) => {
+    const uploadImage = (tex: WebGLTexture | null, unit: number, image: TexImageSource, nearest = false) => {
       if (!tex) return;
       gl.activeTexture(gl.TEXTURE0 + unit);
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 0);
+      // Upload via ImageData when we have an HTMLImageElement so the alpha
+      // channel of cutout webps is guaranteed to reach the GPU (transparent
+      // pixels are stored as RGB black — losing alpha makes them look like ink).
+      if (typeof HTMLImageElement !== "undefined" && image instanceof HTMLImageElement && image.naturalWidth > 0) {
+        const scratch = document.createElement("canvas");
+        scratch.width = image.naturalWidth;
+        scratch.height = image.naturalHeight;
+        const ctx2d = scratch.getContext("2d", { willReadFrequently: true });
+        if (ctx2d) {
+          ctx2d.clearRect(0, 0, scratch.width, scratch.height);
+          ctx2d.drawImage(image, 0, 0);
+          const pixels = ctx2d.getImageData(0, 0, scratch.width, scratch.height);
+          gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+          gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            pixels.width,
+            pixels.height,
+            0,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            pixels.data
+          );
+        } else {
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        }
+      } else {
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      }
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      const filter = nearest ? gl.NEAREST : gl.LINEAR;
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     };
 
     const placeholder = (tex: WebGLTexture | null, unit: number) => {
@@ -571,6 +722,30 @@ export default function ImageEngine({
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    };
+
+    // Fully transparent 1×1 — dissolve target for clearing cutout decals to paper.
+    const uploadEmpty = (tex: WebGLTexture | null, unit: number, nearest = false) => {
+      if (!tex) return;
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        1,
+        1,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        new Uint8Array([0, 0, 0, 0]),
+      );
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const filter = nearest ? gl.NEAREST : gl.LINEAR;
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     };
 
     const allocSnapshot = (tex: WebGLTexture | null) => {
@@ -616,6 +791,8 @@ export default function ImageEngine({
       gl.uniform1f(u("uCapture"), 1);
       gl.uniform1f(u("uProgress"), transition.progress);
       gl.uniform1f(u("uStagger"), STAGGER);
+      // Preserve cutout alpha in the bake when either side is a cutout/empty.
+      gl.uniform1f(u("uCutout"), Math.max(tuningFrom.cutout, tuningTo.cutout));
       {
         const p = transition.progress;
         const sat = tuningFrom.saturation + (tuningTo.saturation - tuningFrom.saturation) * p;
@@ -670,6 +847,9 @@ export default function ImageEngine({
         "uDarkFillTexTo",
         "uGlow",
         "uSaturation",
+        "uInkFloor",
+        "uInkBrightness",
+        "uCutout",
         "uMode",
         "uAA",
         "uCellAspect",
@@ -749,6 +929,10 @@ export default function ImageEngine({
       gl.uniform1f(u("uDarkFillTexTo"), tuningTo.darkFillTexture);
       gl.uniform1f(u("uGlow"), lerp(tuningFrom.glow, tuningTo.glow));
       gl.uniform1f(u("uSaturation"), lerp(tuningFrom.saturation, tuningTo.saturation));
+      gl.uniform1f(u("uInkFloor"), lerp(tuningFrom.inkFloor, tuningTo.inkFloor));
+      gl.uniform1f(u("uInkBrightness"), lerp(tuningFrom.inkBrightness, tuningTo.inkBrightness));
+      // Cutout is a mode flag — take the destination image's value (no soft lerp).
+      gl.uniform1f(u("uCutout"), tuningTo.cutout);
       gl.uniform1f(u("uMode"), cfg.mode === "filled" ? 1 : 0);
       gl.uniform1f(u("uTwinkle"), reduced ? 0 : lerp(tuningFrom.twinkle, tuningTo.twinkle));
       gl.uniform1f(u("uDrift"), reduced ? 0 : lerp(tuningFrom.drift, tuningTo.drift));
@@ -775,6 +959,8 @@ export default function ImageEngine({
       gl.uniform1f(u("uCellAspect"), view.cellAspect);
       gl.uniform3f(u("uBg"), 0.98039, 0.98039, 0.97255);
 
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     };
 
@@ -803,20 +989,31 @@ export default function ImageEngine({
     const transitionTo = (tuning: ImageTuning) => {
       const token = ++loadToken;
       const resolved = resolveTuning(tuning);
-      const next = new Image();
-      next.onload = () => {
-        if (token !== loadToken) return; // superseded by a newer request
-        const newAspect = next.naturalWidth / next.naturalHeight;
+      const isEmpty = !tuning.src;
+      const nearest = resolved.cutout > 0.5;
 
-        if (!currentImg) {
-          // First image: fill both textures so there is nothing to dissolve.
+      const commitIncoming = (
+        uploadTo: () => void,
+        newAspect: number,
+        nextImg: HTMLImageElement | null,
+      ) => {
+        if (token !== loadToken) return;
+
+        if (!hasContent) {
+          // First image (or first empty): fill both textures, no dissolve.
           aspectFrom = newAspect;
           aspectTo = newAspect;
           fromIsSnapshot = false;
           texFrom = uploadTexFrom;
-          uploadImage(uploadTexFrom, 0, next);
-          uploadImage(texTo, 1, next);
-          currentImg = next;
+          if (isEmpty) {
+            uploadEmpty(uploadTexFrom, 0, nearest);
+            uploadEmpty(texTo, 1, nearest);
+          } else if (nextImg) {
+            uploadImage(uploadTexFrom, 0, nextImg, nearest);
+            uploadImage(texTo, 1, nextImg, nearest);
+          }
+          currentImg = nextImg;
+          hasContent = true;
           tuningFrom = resolved;
           tuningTo = resolved;
           transition.progress = 1;
@@ -856,6 +1053,9 @@ export default function ImageEngine({
             skyDriftDamp: blend(tuningFrom.skyDriftDamp, tuningTo.skyDriftDamp),
             focusY: blend(tuningFrom.focusY, tuningTo.focusY),
             saturation: blend(tuningFrom.saturation, tuningTo.saturation),
+            inkFloor: blend(tuningFrom.inkFloor, tuningTo.inkFloor),
+            inkBrightness: blend(tuningFrom.inkBrightness, tuningTo.inkBrightness),
+            cutout: tuningTo.cutout,
           };
 
           // Point unit 0 at the baked snapshot (screen space -> identity UV,
@@ -863,8 +1063,8 @@ export default function ImageEngine({
           fromIsSnapshot = true;
           texFrom = baked;
           aspectTo = newAspect;
-          uploadImage(texTo, 1, next);
-          currentImg = next;
+          uploadTo();
+          currentImg = nextImg;
           tuningTo = resolved;
           resize();
 
@@ -880,10 +1080,14 @@ export default function ImageEngine({
         fromIsSnapshot = false;
         texFrom = uploadTexFrom;
         aspectFrom = aspectTo;
-        uploadImage(uploadTexFrom, 0, currentImg);
+        if (currentImg) {
+          uploadImage(uploadTexFrom, 0, currentImg, tuningTo.cutout > 0.5);
+        } else {
+          uploadEmpty(uploadTexFrom, 0, tuningTo.cutout > 0.5);
+        }
         aspectTo = newAspect;
-        uploadImage(texTo, 1, next);
-        currentImg = next;
+        uploadTo();
+        currentImg = nextImg;
         tuningFrom = tuningTo;
         tuningTo = resolved;
         resize();
@@ -898,6 +1102,25 @@ export default function ImageEngine({
           transition.start = performance.now();
           start();
         }
+      };
+
+      if (isEmpty) {
+        commitIncoming(
+          () => uploadEmpty(texTo, 1, nearest),
+          1,
+          null,
+        );
+        return;
+      }
+
+      const next = new Image();
+      next.onload = () => {
+        const newAspect = next.naturalWidth / next.naturalHeight;
+        commitIncoming(
+          () => uploadImage(texTo, 1, next, nearest),
+          newAspect,
+          next,
+        );
       };
       next.src = tuning.src;
     };
@@ -948,6 +1171,7 @@ export default function ImageEngine({
       fromIsSnapshot = false;
       // Force a fresh, instant load of the current image on restore.
       currentImg = null;
+      hasContent = false;
     };
     const onRestored = () => {
       if (init()) transitionTo(imageRef.current);
@@ -988,8 +1212,17 @@ export default function ImageEngine({
   }, [image]);
 
   return (
-    <div ref={containerRef} className={`relative h-full w-full overflow-hidden ${className ?? ""}`}>
-      <canvas ref={canvasRef} className="block h-full w-full" aria-hidden="true" />
+    <div
+      ref={containerRef}
+      className={`relative h-full w-full overflow-hidden ${className ?? ""}`}
+      style={image.cutout || !image.src ? { background: "transparent" } : undefined}
+    >
+      <canvas
+        ref={canvasRef}
+        className="block h-full w-full"
+        aria-hidden="true"
+        style={image.cutout || !image.src ? { background: "transparent" } : undefined}
+      />
     </div>
   );
 }

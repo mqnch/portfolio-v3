@@ -1,4 +1,18 @@
-import type { ImageTuning } from "@/components/ImageEngine";
+import type { ImageTuning, PixelMode } from "@/components/ImageEngine";
+
+export type SceneDecal = {
+  /** Image + look for an ImageEngine instance in the text panel. */
+  image: ImageTuning;
+  /** Absolute placement + size inside the text panel. */
+  className: string;
+  /** Halftone cell size in CSS px; smaller = finer pixels. Defaults to 2. */
+  cellSize?: number;
+  /**
+   * Draw mode. Linework decals default to halftone so strokes twinkle/drift
+   * like the scene photos; pass "filled" for static solid pixels.
+   */
+  mode?: PixelMode;
+};
 
 export type Scene = {
   id: string;
@@ -12,6 +26,8 @@ export type Scene = {
   caption?: string;
   /** Tailwind text-color class for the caption, tuned per image. Defaults to text-faint. */
   captionColor?: string;
+  /** Optional ImageEngine decals drawn behind the text-panel copy. */
+  decals?: SceneDecal[];
 };
 
 // Per-image render specs. Each photo gets its own look (where the horizon sits,
@@ -73,6 +89,110 @@ export const otherImage: ImageTuning = {
   // and lower glow keeps the sky/clouds from bleeding to white.
   gamma: 0.42,
   glow: 0.2,
+};
+
+// Cherry blossom ink sketch for the work-scene text-panel decal. Transparent
+// bg; black linework. Modest darkFill + low pixelScale keep strokes thin.
+const blossomImage: ImageTuning = {
+  src: "/images/decals/blossom.556890ff.webp",
+  cutout: true,
+  darkFill: 0.62,
+  darkFillTexture: 0.85,
+  glow: 0.1,
+  gamma: 0.85,
+  minDot: 0,
+  inkFloor: 0,
+  inkBrightness: 0.8,
+  twinkle: true,
+  drift: true,
+  horizon: 1,
+  skyTwinkleCalm: 0,
+  skyDriftDamp: 0,
+  saturation: 1,
+  pixelScale: 1.35,
+};
+
+// Lily ink sketch for the writing-scene text-panel decal. Same cutout look as
+// blossom: transparent bg, varied charcoal linework.
+const lilyImage: ImageTuning = {
+  src: "/images/decals/lily.daf0d5cf.webp",
+  cutout: true,
+  darkFill: 0.55,
+  darkFillTexture: 0.85,
+  glow: 0.1,
+  gamma: 0.85,
+  minDot: 0,
+  inkFloor: 0,
+  inkBrightness: 0.9,
+  twinkle: true,
+  drift: true,
+  horizon: 1,
+  skyTwinkleCalm: 0,
+  skyDriftDamp: 0,
+  saturation: 1,
+  pixelScale: 1.35,
+};
+
+// Ivy ink sketch for the built-scene text-panel decal. L-shaped vine along the
+// top and right; same charcoal cutout as the other decals.
+const ivyImage: ImageTuning = {
+  src: "/images/decals/ivy.58d3ad32.webp",
+  cutout: true,
+  darkFill: 0.62,
+  darkFillTexture: 0.85,
+  glow: 0.1,
+  gamma: 0.85,
+  minDot: 0,
+  inkFloor: 0,
+  inkBrightness: 0.7,
+  twinkle: true,
+  drift: true,
+  horizon: 1,
+  skyTwinkleCalm: 0,
+  skyDriftDamp: 0,
+  saturation: 1,
+  pixelScale: 1.35,
+};
+
+// Leaf sprigs for the about-scene text-panel decal. Same charcoal cutout
+// as the other decals.
+const leavesImage: ImageTuning = {
+  src: "/images/decals/leaves.16ef3a17.webp",
+  cutout: true,
+  darkFill: 0.62,
+  darkFillTexture: 0.85,
+  glow: 0.1,
+  gamma: 0.85,
+  minDot: 0,
+  inkFloor: 0,
+  inkBrightness: 0.65,
+  twinkle: true,
+  drift: true,
+  horizon: 1,
+  skyTwinkleCalm: 0,
+  skyDriftDamp: 0,
+  saturation: 1,
+  pixelScale: 1.35,
+};
+
+// Spider lily (lycoris) ink sketch for the other-scene text-panel decal.
+const lycorisImage: ImageTuning = {
+  src: "/images/decals/lycoris.5d94bd05.webp",
+  cutout: true,
+  darkFill: 0.42,
+  darkFillTexture: 0.85,
+  glow: 0.1,
+  gamma: 0.85,
+  minDot: 0,
+  inkFloor: 0,
+  inkBrightness: 1.0,
+  twinkle: true,
+  drift: true,
+  horizon: 1,
+  skyTwinkleCalm: 0,
+  skyDriftDamp: 0,
+  saturation: 1,
+  pixelScale: 1.35,
 };
 
 // Blog photo: a whale shark in a dark aquarium tank. There's no real sky, so
@@ -206,6 +326,16 @@ export const scenes: Scene[] = [
     label: "about",
     href: "/",
     caption: "victoria harbor, hk",
+    decals: [
+      {
+        image: leavesImage,
+        // Two stacked sprigs; right side of the text panel.
+        className:
+          "absolute bottom-[0%] right-5 h-[55%] aspect-[723/1024] max-w-[55%]",
+        cellSize: 1.5,
+        mode: "halftone",
+      },
+    ],
   },
   {
     id: "work",
@@ -213,6 +343,16 @@ export const scenes: Scene[] = [
     href: "/work",
     image: workImage,
     caption: "lugard road trail, hk",
+    decals: [
+      {
+        image: blossomImage,
+        // Match the asset aspect so object-cover doesn't clip; flush to bottom.
+        className:
+          "absolute bottom-[-1%] right-0 h-[52%] aspect-[512/1024] max-w-[55%]",
+        cellSize: 1.5,
+        mode: "halftone",
+      },
+    ],
   },
   {
     id: "built",
@@ -221,6 +361,16 @@ export const scenes: Scene[] = [
     image: builtImage,
     caption: "brooklyn botanical garden, nyc",
     captionColor: "text-white",
+    decals: [
+      {
+        image: ivyImage,
+        // L-shaped vine hugs top + right; nudged up so the corner sits higher.
+        className:
+          "absolute top-[-1%] right-0 h-[55%] aspect-[682/1024] max-w-[65%]",
+        cellSize: 1.5,
+        mode: "halftone",
+      },
+    ],
   },
   {
     id: "writing",
@@ -229,6 +379,16 @@ export const scenes: Scene[] = [
     image: blogImage,
     caption: "osaka aquarium",
     captionColor: "text-foreground",
+    decals: [
+      {
+        image: lilyImage,
+        // Tall portrait asset; right, middle-top of the text panel.
+        className:
+          "absolute top-[20%] right-[4%] h-[52%] aspect-[576/1024] max-w-[55%]",
+        cellSize: 1.5,
+        mode: "halftone",
+      },
+    ],
   },
   {
     id: "other",
@@ -237,6 +397,16 @@ export const scenes: Scene[] = [
     image: otherImage,
     caption: "train from nara to kyoto",
     captionColor: "text-white",
+    decals: [
+      {
+        image: lycorisImage,
+        // Wide landscape crop; upper-right of the text panel.
+        className:
+          "absolute bottom-[12%] right-[26%] w-[48%] aspect-[726/500] max-h-[28%]",
+        cellSize: 1.5,
+        mode: "halftone",
+      },
+    ],
   },
 ];
 

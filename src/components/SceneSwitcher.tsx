@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -9,8 +9,12 @@ import {
   defaultImage,
   sceneIndexFromPath,
   type Scene,
+  type SceneDecal,
 } from "@/app/scenes";
-import ImageEngine from "@/components/ImageEngine";
+import ImageEngine, {
+  emptyImage,
+  type ImageTuning,
+} from "@/components/ImageEngine";
 
 type SceneSwitcherProps = {
   children: ReactNode;
@@ -28,6 +32,14 @@ const WHEEL_COOLDOWN = 450;
 // Quiet long enough to treat the next impulse as a fresh rising edge.
 const WHEEL_IDLE_MS = 120;
 const SWIPE_THRESHOLD = 25;
+// Must match ImageEngine TRANSITION_MS — how long an exit layer stays mounted.
+const DECAL_DISSOLVE_MS = 1100;
+
+type DecalLayer = {
+  id: number;
+  placement: SceneDecal;
+  image: ImageTuning;
+};
 
 function wheelMagnitude(e: WheelEvent) {
   const abs = Math.abs(e.deltaY);
@@ -35,6 +47,23 @@ function wheelMagnitude(e: WheelEvent) {
   if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE)
     return abs * (typeof window !== "undefined" ? window.innerHeight : 800);
   return abs;
+}
+
+function sceneDecal(scene: Scene): SceneDecal | null {
+  return scene.decals?.[0] ?? null;
+}
+
+function DecalEngine({ layer }: { layer: DecalLayer }) {
+  return (
+    <div className={layer.placement.className}>
+      <ImageEngine
+        image={layer.image}
+        cellSize={layer.placement.cellSize ?? 1.5}
+        mode={layer.placement.mode ?? "halftone"}
+        className="h-full w-full"
+      />
+    </div>
+  );
 }
 
 export default function SceneSwitcher({
@@ -47,6 +76,85 @@ export default function SceneSwitcher({
   const router = useRouter();
   const current = sceneIndexFromPath(pathname);
   const scene = scenes[current] ?? scenes[0];
+
+  // Two decal layers so exit→white and enter←white start together on scene change.
+  // Exit reuses the previous enter layer's id/key so ImageEngine stays mounted and
+  // dissolves in place (remounting with full ink caused a one-frame flash).
+  const initialDecal = sceneDecal(scene);
+  const layerIdRef = useRef(0);
+  const [enterLayer, setEnterLayer] = useState<DecalLayer | null>(() =>
+    initialDecal
+      ? { id: 0, placement: initialDecal, image: initialDecal.image }
+      : null,
+  );
+  const [exitLayer, setExitLayer] = useState<DecalLayer | null>(null);
+  const enterRef = useRef(enterLayer);
+  enterRef.current = enterLayer;
+  const showingSrcRef = useRef(initialDecal?.image.src ?? "");
+
+  useEffect(() => {
+    const target = sceneDecal(scene);
+    const targetSrc = target?.image.src ?? "";
+    if (targetSrc === showingSrcRef.current) return;
+
+    const prev = enterRef.current;
+    showingSrcRef.current = targetSrc;
+
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const dissolveMs = reduced ? 0 : DECAL_DISSOLVE_MS;
+
+    const timeouts: number[] = [];
+    const rafs: number[] = [];
+    let cancelled = false;
+    const later = (fn: () => void, ms: number) => {
+      timeouts.push(window.setTimeout(fn, ms));
+    };
+
+    // Reuse the live enter engine as exit (same id → same React key → no remount).
+    // Flip straight to empty so ink dissolves out without popping full-opacity first.
+    if (prev?.image.src) {
+      const exitId = prev.id;
+      setExitLayer({ ...prev, image: emptyImage });
+      later(() => {
+        if (!cancelled) {
+          setExitLayer((layer) => (layer && layer.id === exitId ? null : layer));
+        }
+      }, dissolveMs + 40);
+    } else {
+      setExitLayer(null);
+    }
+
+    // New enter engine at the new placement: start empty, dissolve ink in after
+    // the engine has committed (double rAF), so it never first-loads full ink.
+    if (target) {
+      const id = ++layerIdRef.current;
+      setEnterLayer({ id, placement: target, image: emptyImage });
+      rafs.push(
+        requestAnimationFrame(() => {
+          rafs.push(
+            requestAnimationFrame(() => {
+              if (cancelled) return;
+              setEnterLayer((layer) =>
+                layer && layer.id === id
+                  ? { ...layer, image: target.image }
+                  : layer,
+              );
+            }),
+          );
+        }),
+      );
+    } else {
+      setEnterLayer(null);
+    }
+
+    return () => {
+      cancelled = true;
+      for (const t of timeouts) clearTimeout(t);
+      for (const r of rafs) cancelAnimationFrame(r);
+    };
+  }, [scene]);
 
   const lockedRef = useRef(false);
   // Set while an expanded project (or other overlay) wants to own scrolling and
@@ -167,8 +275,16 @@ export default function SceneSwitcher({
 
   return (
     <main className="fixed inset-0 flex flex-col overflow-hidden md:flex-row">
-      <div className="text-panel relative z-10 flex h-full flex-col overflow-x-hidden px-6 py-10 md:px-16 md:py-14">
-        <header className="flex items-center gap-3">
+      <div className="text-panel relative z-10 flex h-full flex-col overflow-hidden px-6 py-10 md:px-16 md:py-14">
+        <div
+          className="pointer-events-none absolute inset-0 z-0 overflow-visible"
+          aria-hidden
+        >
+          {exitLayer && <DecalEngine key={exitLayer.id} layer={exitLayer} />}
+          {enterLayer && <DecalEngine key={enterLayer.id} layer={enterLayer} />}
+        </div>
+
+        <header className="relative z-10 flex items-center gap-3">
           <h1 className="text-xl font-semibold tracking-tight">
             <Link
               href="/"
@@ -181,13 +297,13 @@ export default function SceneSwitcher({
           </h1>
         </header>
 
-        <div className="flex min-w-0 flex-1 items-center overflow-hidden">
+        <div className="relative z-10 flex min-w-0 flex-1 items-center overflow-hidden">
           <div key={scene.id} className="fade w-full min-w-0 space-y-6">
             {children}
           </div>
         </div>
 
-        <footer className="space-y-4">
+        <footer className="relative z-10 space-y-4">
           <nav className="flex items-center gap-5 text-sm italic">
             {scenes.map((s) => (
               <Link
