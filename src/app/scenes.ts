@@ -232,15 +232,6 @@ export const experience = [
     logo: "/images/mtxt.705ae0c1.png",
     logoScale: "scale-[1.55]",
   },
-  {
-    company: "WATonomous",
-    role: "Software Engineer",
-    location: "Waterloo, ON",
-    href: "https://www.watonomous.ca",
-    period: "2025",
-    logo: "/images/wato.170c75f7.png",
-    logoScale: null,
-  },
 ];
 
 export type Project = {

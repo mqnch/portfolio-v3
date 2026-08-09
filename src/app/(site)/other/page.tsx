@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function OtherPage() {
   return (
     <p className="text-muted leading-relaxed text-lg">
-      i rank every place i eat at on beli{" "}
+      i rate all the food i eat on beli{" "}
       <span className="text-foreground">@felixpan</span>. my top-rated spot is{" "}
       <a
         href="https://maps.app.goo.gl/MyCh9r3YLmio7fGu5"
@@ -51,12 +51,12 @@ export default function OtherPage() {
       </a>
       <br />
       <a
-        href="https://open.spotify.com/track/4xVoUumxOenynyfVwoZGZi?si=d3defcfdddef45da"
+        href="https://open.spotify.com/track/1hK3m0KsWXMuZdt3oVLqke?si=7378c4bcc089474f"
         target="_blank"
         rel="noreferrer"
         className="text-foreground underline-offset-4 hover:underline"
       >
-        worth your time / nothing at all · kiyu, reiko
+        collide · reiko
       </a>
       <br />
       <br />
